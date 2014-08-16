@@ -1,94 +1,170 @@
+var nsUtil = require("util");
 
 // ---------------------------------------------------------------------------
 var alv = {};
 
-// ---------------------------------------------------------------------------
 var flv = function(id){
 	if (!(id in alv)){
-		alv[id] = new LiveVar();
+		var lv=new LiveValue();
+		alv[id]=lv;
 	}
 	return alv[id];
 };
-
-// ---------------------------------------------------------------------------
-var fLVSet(id,x,vidDep){
-	flv(id).fSet(x,vidDep);
+var flvSet = function(id,x,vlvDependsOn){
+	var lv = flv(id);
+	lv.fSet(x,vlvDependsOn);
+	return lv;
+};
+var fxLVGet = function(id){
+	return flv(id).fxGet(id);
 };
 
 // ---------------------------------------------------------------------------
-var fxLVGet(id){
-	return flv(id).fxGet();
+var LiveValue = function(x,vlvDependsOn){
+	this.x            = undefined;
+	this.vlvDependsOn = [];
+	this.vlvListeners = [];
+	this.xCached      = null;
+	this.bDirty       = false;
+	this.fSet(x,vlvDependsOn);
 };
 
 
 // ---------------------------------------------------------------------------
-var LiveVar = function(){
-	this.setidListeners = new StringSet();
-	this.setidDependsOn = new StringSet();
+LiveValue.prototype.fSet = function(x,vlvDependsNew){
+	vlvDependsNew = vlvDependsNew || [];
+
+	this.fDirty();
+
+	// change function
 	this.x = x;
-	this.xCached = x;
-	this.bDirty = false;
-};
-
-// ---------------------------------------------------------------------------
-LiveVar.prototype.fSet(x,vidDep){
-	if (!this.bDirty){
-		this.setidListeners.each(function(idListener){
-			flv(idListener).fDirty();
-		});
-
-		this.bDirty = true;
-	}
-
-	lv.x = x;
 
 	// correct listeners
-	setidNowDependsOn = new StringSet(vidDep);
 
-	var setidNoLongerDependsOn = this.setidDependsOn.fsetidDifference(setidNowDependsOn);
-	setidNoLongerDependsOn.each(function(idDep){
-		flv(idDep).fRemoveListener(id);
+	// mark all new dependencies
+	vlvDependsNew.forEach(function(vlDep){vlDep.nMark = 1;});
+
+	// remove watches on any which are no longer dependencies
+	// and mark prexisting dependencies
+	var lv = this;
+	this.vlvDependsOn.forEach(function(lvDep){
+		if ( lvDep.nMark !==1 ){
+			lvDep.fRemoveListener(lv);
+		}
+		else {
+			lvDep.nMark = 2;
+		}
 	});
 
-	var setidNewlyDependsOn = setidNowDependsOn.fsetidDifference(this.setidDependsOn);
-	setidNowDependsOn.each(function(idDep){
-		flv(idDep).fAddListener(id);
+	// add watches on any new dependencies
+	// and remove all marks
+	vlvDependsNew.forEach(function(vlDep){
+		if(vlDep.nMark !== 2){
+			vlDep.fAddListener(lv);
+		}
+		delete vlDep.nMark;
 	});
 
-	this.setidDependsOn = setidNowDependsOn;
+	// update the dependency list
+	this.vlvDependsOn = vlvDependsNew;
 };
 
 
 // ---------------------------------------------------------------------------
-LiveVar.prototype.fDirty(){
-	this.bDirty = true;
+LiveValue.prototype.fDirty = function(){	
+	// if we weren't already dirty we are now 
+	if (!this.bDirty){
+	
+		// so tell listensers
+		this.vlvListeners.forEach(function(lvListener){
+			lvListener.fDirty();
+		});
+
+		// mark dirtyness
+		this.bDirty = true;
+	}
 };
 
 // ---------------------------------------------------------------------------
-LiveVar.prototype.fRemoveListener(id){
-	this.setidListeners.fRemove(id);
+LiveValue.prototype.fRemoveListener = function(lv){
+	this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
 };
 
 // ---------------------------------------------------------------------------
-LiveVar.prototype.fAddListener(id){
-	this.setidListeners.fAdd(id);
+LiveValue.prototype.fAddListener = function(lv){
+	this.vlvListeners.push(lv);
 };
 
 
 // ---------------------------------------------------------------------------
-LiveVar.prototype.fxGet(){
+LiveValue.prototype.fxGet = function(){
 	if (this.bDirty){
-		this.xCached = this.x();
+		if (typeof(this.x) === "function"){
+			this.xCached = this.x();
+		}	
+		else{
+			this.xCached = this.x;
+		}	
 		this.bDirty = false;
 	}
 
 	return this.xCached;
 };
 
+/*
 
-// ---------------------------------------------------------------------------
-SetVar('x', 5,[]);
+flvSet("a",5);
+flvSet("b",function(){return fxLVGet("a");},[flv("a")]);
+console.log(fxLVGet("b"));
 
-SetVar('y', function(){return GetVar('x');}, ['x']);
+flvSet("a",6);
+console.log(fxLVGet("b"));
 
- 
+flvSet("a",function(){return fxLVGet("c");},[flv("c")]);
+console.log(fxLVGet("b"));
+
+flvSet("c",7);
+//console.log(nsUtil.inspect(flv("a"),{depth:10}));
+
+console.log(fxLVGet("b"));
+
+
+
+lvA = new LiveValue(5);
+lvB = new LiveValue(function(){return lvA.fxGet();},[lvA]);
+console.log(lvB.fxGet());
+
+lvA.fSet(6);
+console.log(lvB.fxGet());
+
+lvC = new LiveValue();
+lvA.fSet(function(){return lvC.fxGet();},[lvC]);
+console.log(lvB.fxGet());
+
+lvC.fSet(7);
+console.log(lvB.fxGet());
+
+//console.log(nsUtil.inspect(lvA));
+
+
+
+*/
+
+var LV = function(x,vlv){
+	return new LiveValue(x,vlv);
+};
+
+
+var lvA = LV(5);
+var lvB = LV(6);
+var lvC = LV(function(){return lvA.fxGet() + lvB.fxGet();}, [lvA, lvB]);
+console.log(lvC.fxGet());
+lvB.fSet(20);
+console.log(lvC.fxGet());
+
+var lvD = LV("happy");
+var lvE = LV(function(){return lvD.fxGet() + lvC.fxGet();}, [lvD, lvC]);
+console.log(lvE.fxGet());
+
+lvB.fSet(2);
+console.log(lvE.fxGet());
