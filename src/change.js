@@ -1,170 +1,230 @@
 var nsUtil = require("util");
+var D=console.log;
+var each = require("./each");
+var Scope = require("./Scope");
 
-// ---------------------------------------------------------------------------
-var alv = {};
 
-var flv = function(id){
-	if (!(id in alv)){
-		var lv=new LiveValue();
-		alv[id]=lv;
-	}
-	return alv[id];
-};
-var flvSet = function(id,x,vlvDependsOn){
-	var lv = flv(id);
-	lv.fSet(x,vlvDependsOn);
-	return lv;
-};
-var fxLVGet = function(id){
-	return flv(id).fxGet(id);
-};
-
-// ---------------------------------------------------------------------------
-var LiveValue = function(x,vlvDependsOn){
-	this.x            = undefined;
-	this.vlvDependsOn = [];
-	this.vlvListeners = [];
-	this.xCached      = null;
-	this.bDirty       = false;
-	this.fSet(x,vlvDependsOn);
-};
 
 
 // ---------------------------------------------------------------------------
-LiveValue.prototype.fSet = function(x,vlvDependsNew){
-	vlvDependsNew = vlvDependsNew || [];
-
-	this.fDirty();
-
-	// change function
-	this.x = x;
-
-	// correct listeners
-
-	// mark all new dependencies
-	vlvDependsNew.forEach(function(vlDep){vlDep.nMark = 1;});
-
-	// remove watches on any which are no longer dependencies
-	// and mark prexisting dependencies
-	var lv = this;
-	this.vlvDependsOn.forEach(function(lvDep){
-		if ( lvDep.nMark !==1 ){
-			lvDep.fRemoveListener(lv);
-		}
-		else {
-			lvDep.nMark = 2;
-		}
-	});
-
-	// add watches on any new dependencies
-	// and remove all marks
-	vlvDependsNew.forEach(function(vlDep){
-		if(vlDep.nMark !== 2){
-			vlDep.fAddListener(lv);
-		}
-		delete vlDep.nMark;
-	});
-
-	// update the dependency list
-	this.vlvDependsOn = vlvDependsNew;
-};
-
-
+// stub out jQuery
 // ---------------------------------------------------------------------------
-LiveValue.prototype.fDirty = function(){	
-	// if we weren't already dirty we are now 
-	if (!this.bDirty){
-	
-		// so tell listensers
-		this.vlvListeners.forEach(function(lvListener){
-			lvListener.fDirty();
+var $;
+var fCreateDom = require("jsdom").env;
+var nsFs = require('fs');
+
+fCreateDom(
+	"<page />",
+	function(err, window){
+		$ = require('jquery')(window);
+		var html = nsFs.readFileSync("test-foreach.silk").toString();;
+		$(html).appendTo("page");
+
+		// get all script definitions?
+		var scope = new Scope("global");
+
+		$("script[type=defelt]").each(function(n,e){
+			fDefElement(scope,$(e) );
 		});
 
-		// mark dirtyness
-		this.bDirty = true;
+		scope.defvar("x",[1,2,3]);
+		scope.defvar("_page", ffjqEvalElement(scope, $("page")));
+
+		D($("<div></div>").append(scope._page).html());
+
+		D("--------------------------------------------");
+//		scope.times = 5;
+		scope.set("x",[1,4,3]);
+		D($("<div></div>").append(scope._page).html());
+
+	}
+);
+
+
+
+// ---------------------------------------------------------------------------
+var fCopyAttributes = function(jqTo, jqFrom){
+	// copy attributes
+	each(jqFrom.prop("attributes"), function(aAttr){
+		var sAttr = aAttr["name"];
+		var sVal = aAttr["value"];
+		jqTo.attr(sVar, sVal);
+	});
+};
+
+// ---------------------------------------------------------------------------
+var faAttributes = function(jq){
+	var a = {};
+	each(jq.prop("attributes"), function(aAttr){
+		var sAttr = aAttr["name"];
+		var sVal = aAttr["value"];
+		if (sAttr){
+			a[sAttr] = sVal;
+		}
+	});
+	return a;
+};
+
+// ---------------------------------------------------------------------------
+var ffjqPassthrough = function(scope){
+	return function(){
+		var jq = $("<" + scope._element + ">");
+		each(scope._attributes, function(sVal, sVar){
+			jq.attr(sVar,scope.alv[sVar].fxGet());
+		});
+		jq.append(scope._inner);
+		return jq;
+	}
+};
+
+
+// ---------------------------------------------------------------------------
+var fsUnescape = function(s){
+	// NOTE: this may not be efficient. compare to replace(re,f) style
+	return s
+		.replace(/&amp;/gim,"&")
+		.replace(/&lt;/gim,"<")
+		.replace(/&gt;/gim,">")
+		.replace(/&quot/gim,"\"")
+		.replace(/&#x27;/gim,"'");
+};
+
+// ---------------------------------------------------------------------------
+var fDefElement = function(scope,jq){
+	var sBody = jq.html();
+
+	var aAttr = faAttributes(jq);
+	var sName = aAttr["name"];
+	var sScope = aAttr["scope"] || "_";
+	var sQuery = aAttr["query"] || "jq";
+	delete aAttr["name"];
+	delete aAttr["scope"];
+	delete aAttr["query"];
+	
+	var afClosure = {};
+	each(aAttr, function(sVal, sVar){
+		// we allow the argument to be an expression
+		afClosure[sVar]=scope.expr(sVal);
+	});
+
+
+	sBody = fsUnescape(sBody);
+
+	// using this eval trick gives us a closure over $ 
+	var f=eval("(function(" + sScope + "," + sQuery + "){" + sBody +"})");
+//	var f = new Function(sScope, sBody);
+
+	scope.defvar(
+		sName,
+		function(){
+			return function(scopeIn){
+				// arguments
+				each(afClosure, function(fClosure, sVar){
+//					if (!(sVar in scope.alv)){
+						scopeIn.defvar(sVar, fClosure);
+//					}
+				});
+				return f(scopeIn);
+			}
+		}
+	);
+};
+
+// ---------------------------------------------------------------------------
+var reExpr = /\{\{(.*?)\}\}/g;
+var ffjqEvalText = function(scope,jqScript){
+	var s=jqScript.text();
+	var re=reExpr;
+
+	var aMatch;
+	var vx=[];
+	var n = 0;
+
+
+	while(aMatch = re.exec(s)){
+		var c = aMatch[0].length;
+		vx.push(s.slice(n,aMatch["index"]));
+		n=aMatch["index"] + c;
+		vx.push(scope.expr(aMatch[1]));
+	};
+	vx.push(s.slice(n));
+
+
+	return function(_){
+
+		var vs=[];
+
+		each(vx,function(x){
+			if (typeof(x) === "function"){
+				vs.push(x(_));
+			}
+			else{
+				vs.push(x);
+			}
+		});
+
+		var s=vs.join('');
+		return $("<div>").text(s).contents();
 	}
 };
 
 // ---------------------------------------------------------------------------
-LiveValue.prototype.fRemoveListener = function(lv){
-	this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
-};
-
-// ---------------------------------------------------------------------------
-LiveValue.prototype.fAddListener = function(lv){
-	this.vlvListeners.push(lv);
-};
-
-
-// ---------------------------------------------------------------------------
-LiveValue.prototype.fxGet = function(){
-	if (this.bDirty){
-		if (typeof(this.x) === "function"){
-			this.xCached = this.x();
-		}	
-		else{
-			this.xCached = this.x;
-		}	
-		this.bDirty = false;
+var ffjqEvalElement = function(scopeIn,jqScript){
+	var nNodeType = jqScript.get()[0].nodeType;
+	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
+	if (nNodeType === 8 || jqScript.length === 0 || sElement === "script"){
+		return function(){return $();};
 	}
 
-	return this.xCached;
+	var _ = scopeIn.fscopeClone(scopeIn.sName + ".1");
+	_.defvar("_inner");
+
+	var fjq;
+
+	if (nNodeType === 3){
+		fjq = ffjqEvalText(_,jqScript);
+	}
+	else{
+		// evaluate element before its children
+		var ffjq = (
+			(sElement in _.alv)
+				? _.alv[sElement].fxGet()
+				: ffjqPassthrough
+		);
+		fjq = ffjq(_,jqScript);
+
+		var aAttr = faAttributes(jqScript);
+		// predeclare the _inner so that the element is bound
+		// to the _inner of its own scope
+		_.defvar("_element",sElement);
+		_.defvar("_attributes",aAttr);
+		each(aAttr, function(sVal, sVar){
+			_.defvar(sVar, scopeIn.expr(sVal));
+		});
+
+	}
+
+	_.defvar('_createInner', function(){
+		return function(_){
+			var vf = [];
+			each(jqScript.contents().get(),function(e){
+				vf.push(ffjqEvalElement(_, $(e)));
+			});
+
+			return function(){
+				var jqInner=$();
+				each(vf, function(f){
+					jqInner = jqInner.add(f(_).clone());
+				});
+				return jqInner;
+			};
+		}
+	});
+
+
+	// quick alias for _._createInner(_);
+	_._inner = _._createInner(_);
+
+	return fjq;
+
 };
-
-/*
-
-flvSet("a",5);
-flvSet("b",function(){return fxLVGet("a");},[flv("a")]);
-console.log(fxLVGet("b"));
-
-flvSet("a",6);
-console.log(fxLVGet("b"));
-
-flvSet("a",function(){return fxLVGet("c");},[flv("c")]);
-console.log(fxLVGet("b"));
-
-flvSet("c",7);
-//console.log(nsUtil.inspect(flv("a"),{depth:10}));
-
-console.log(fxLVGet("b"));
-
-
-
-lvA = new LiveValue(5);
-lvB = new LiveValue(function(){return lvA.fxGet();},[lvA]);
-console.log(lvB.fxGet());
-
-lvA.fSet(6);
-console.log(lvB.fxGet());
-
-lvC = new LiveValue();
-lvA.fSet(function(){return lvC.fxGet();},[lvC]);
-console.log(lvB.fxGet());
-
-lvC.fSet(7);
-console.log(lvB.fxGet());
-
-//console.log(nsUtil.inspect(lvA));
-
-
-
-*/
-
-var LV = function(x,vlv){
-	return new LiveValue(x,vlv);
-};
-
-
-var lvA = LV(5);
-var lvB = LV(6);
-var lvC = LV(function(){return lvA.fxGet() + lvB.fxGet();}, [lvA, lvB]);
-console.log(lvC.fxGet());
-lvB.fSet(20);
-console.log(lvC.fxGet());
-
-var lvD = LV("happy");
-var lvE = LV(function(){return lvD.fxGet() + lvC.fxGet();}, [lvD, lvC]);
-console.log(lvE.fxGet());
-
-lvB.fSet(2);
-console.log(lvE.fxGet());
