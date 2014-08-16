@@ -1,0 +1,1 @@
+<a test="1"> THE CURRENT VALUE OF X IS {{_.test}}</a>

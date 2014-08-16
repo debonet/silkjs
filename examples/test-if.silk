@@ -1,0 +1,57 @@
+<!-- if element -->
+<script type="defelt" name="if" test="false">
+	return function(){
+		if (_.test){
+			return _._inner;
+		}
+		return $();
+	};
+</script>
+
+
+<if test="false">
+	dont show this
+</if>
+
+<if test="true">
+	show this
+</if>
+
+<if>
+	dont show
+</if>
+
+
+<!-- switch case -->
+<script type="defelt" name="case" test="true">
+	return function(){
+		if (!_.switchflag, _.test){
+			_.switchflag = true;
+			return _._inner;
+		}
+		return $();
+	};
+</script>
+
+<script type="defelt" name="switch">
+	_.defvar('switchflag',false);
+	return function(){
+		return _._inner;
+	};
+</script>
+
+
+<switch>
+	<case test="false">A</case>
+	<case test="false">B</case>
+	<case test="true">
+		<switch>
+			<case test="false">AA</case>
+			<case test="true" >BB</case>
+			<case test="false">CC</case>
+			<case test="false">DD</case>
+		</switch>
+	</case>
+	<case test="false">D</case>
+</switch>
+

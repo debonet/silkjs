@@ -1,0 +1,50 @@
+<!-- repeat element -->
+<script type="defelt" scope="_" name="repeat" times="0">
+	var vscope = [];
+	var scopeRepeat = new Scope("repeatscope");
+
+	return function(){
+		var jq = $();
+		var n;
+		var c = _.times;
+		var cAlloc = vscope.length;
+
+		// delete exess
+		vscope = vscope.slice(0,c);
+		for (n=c; n<cAlloc; n++){
+			scopeRepeat.del(n);
+		}
+
+		// make new ones
+		for (n=vscope.length; n<c; n++){
+			vscope[n] = _.fscopeClone();
+			vscope[n].defvar("_index",n);
+			scopeRepeat.defvar(n,_._createInner(vscope[n]));
+		}
+
+		// eval and add
+		for (n=0; n<c; n++){
+			jq = jq.add(scopeRepeat[n]);
+		}
+		return jq;
+	};
+</script>
+
+
+
+<repeat times="3">
+	fuukkk {{_._index}}
+</repeat>
+
+
+
+<repeat times="3">
+	{{_._index}}
+	<repeat times="_._index+3">	{{_._index}}
+	</repeat>
+	<test a="_._index" />
+</repeat>
+
+
+
+
