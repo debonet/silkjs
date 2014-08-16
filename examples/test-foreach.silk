@@ -1,0 +1,49 @@
+<!-- foreach element -->
+<script type="defelt" scope="_" name="let">
+	return function(){
+		return _._inner;
+	}
+</script>
+
+<script type="defelt" scope="_" name="foreach" items="[]">
+	var ascope = {};
+	var scopeForeach = new Scope("foreachscope");
+
+	return function(){
+		var jq = $();
+
+		var a=_.items;
+
+		// delete exess
+		each(ascope,function(scope,s){
+			if (!(s in a)){
+				delete ascope[s];
+				scopeForeach.del(s);
+			}
+		});
+
+		each(a,function(x,s){
+			if (!(s in ascope)){
+				ascope[s] = _.fscopeClone();
+				ascope[s].defvar("_item",_.expr("_.items[" + s + "]"));
+				ascope[s].defvar("_index",s);
+				scopeForeach.defvar(s,_._createInner(ascope[s]));
+			}
+		});
+
+		// eval and add
+		each(a,function(x,s){
+			jq = jq.add(scopeForeach[s]);
+		});
+		return jq;
+	};
+</script>
+
+
+	<foreach items="_.x">
+	{{_._index}} {{_._item}}
+	</foreach>
+
+
+
+
