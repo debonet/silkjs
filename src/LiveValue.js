@@ -1,7 +1,9 @@
+var D=console.log;
+
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 var LiveValue = function(s,x){
-	this.sName         = s;
+	this.sName         = s+Math.floor(Math.random()*1000);
 	this._x            = undefined;
 	this.vlvDependsOn  = [];
 	this.vlvListeners  = [];
@@ -13,11 +15,13 @@ var LiveValue = function(s,x){
 
 // ---------------------------------------------------------------------------
 LiveValue.prototype.fSet = function(x){
-	this.fDirty();
 	// change function
 //	D("SET",this.sName,x);
 
-	this._x = x;
+	if(this._x !== x){
+		this.fDirty();
+		this._x = x;
+	}
 }
 
 
@@ -25,7 +29,7 @@ LiveValue.prototype.fSet = function(x){
 LiveValue.prototype.fDirty = function(){	
 	// if we weren't already dirty we are now 
 	if (!this.bDirty){
-	
+//		D("MARKING DIRTY", this.sName, this.vlvListeners.length);
 		// so tell listensers
 		this.vlvListeners.forEach(function(lvListener){
 			lvListener.fDirty();
@@ -51,31 +55,36 @@ LiveValue.prototype.fAddListener = function(lv){
 
 // ---------------------------------------------------------------------------
 var kvlvDependsCache=[];
-
+var klvListeners = [];
+var cDepth = 0;
 LiveValue.prototype.fxGet = function(){
 
-//	D("GET",this.sName);
-
 	if(kvlvDependsCache.length){
-//		D("DEP",this.sName);
-		kvlvDependsCache[0].push(this);
+		var c = kvlvDependsCache.length;
+		kvlvDependsCache[c-1].push(this);
+//		D("  LISTENER",this.sName, klvListeners[klvListeners.length-1].sName);
+		this.fAddListener(klvListeners[c-1]);
 	}
 
 	if (this.bDirty){
+		this.bDirty = false;
+
 		if (typeof(this._x) === "function"){
 			var vlvDependsNew = [];
-			kvlvDependsCache.unshift(vlvDependsNew);
+			kvlvDependsCache.push(vlvDependsNew);
+			klvListeners.push(this);
 			this._xCached = this._x();
-			kvlvDependsCache.shift();
+			klvListeners.pop();
+			kvlvDependsCache.pop();
 	
 			// mark all new dependencies
 			vlvDependsNew.forEach(function(vlDep){vlDep.nMark = 1;});
-	
+
 			// remove watches on any which are no longer dependencies
 			// and mark prexisting dependencies
 			var lv = this;
 			this.vlvDependsOn.forEach(function(lvDep){
-				if ( lvDep.nMark !==1 ){
+				if ( !lvDep.nMark ){
 					lvDep.fRemoveListener(lv);
 				}
 				else {
@@ -94,16 +103,13 @@ LiveValue.prototype.fxGet = function(){
 	
 			// update the dependency list
 			this.vlvDependsOn = vlvDependsNew;
-			this.bRedefined = false;
 		}
 		else{
 			this._xCached = this._x;
 		}	
-		this.bDirty = false;
 	}
 	return this._xCached;
 };
-
 
 
 

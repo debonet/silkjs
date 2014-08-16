@@ -36,7 +36,7 @@ you sould see "show this" below here
 </defelt>
 
 <defelt name="switch">
-	_.defvar('switchflag',false);
+	_.switchflag = false; // non watched!
 	return function(){
 		return _._inner;
 	};

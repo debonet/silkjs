@@ -13,17 +13,18 @@ var $;
 var fCreateDom = require("jsdom").env;
 var nsFs = require('fs');
 
+var sfl = nsProcess.argv[2] || "../examples/test-repeat.silk";
+var shtml = nsFs.readFileSync(sfl).toString();
+
 fCreateDom(
 	"<page />",
 	function(err, window){
-		var sfl = nsProcess.argv[2] || "../examples/test-repeat.silk";
 		$ = require('jquery')(window);
-		var shtml = nsFs.readFileSync(sfl).toString();
 
 		shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
 		shtml = shtml.replace(/<\/defelt>/g,"</script>");
 
-		$("<!-- -->" + shtml).appendTo("page");
+		$("<!-- -->" + shtml+"<!-- -->").appendTo("page");
 
 		// get all script definitions?
 		var scope = new Scope("global");
@@ -35,7 +36,22 @@ fCreateDom(
 		scope.defvar("x",[1,2,3]);
 		scope.defvar("_page", ffjqEvalElement(scope, $("page")));
 
-		D(scope._page.html().replace(/^[\n\s]*$/gmi,''));
+		var jq;
+		for (var n=0; n<10; n++){
+			jq = scope._page;
+			if (!scope.alv._page.bDirty){
+				break;
+			}
+			D(jq.html().replace(/^[\n\s]*$/gmi,''));
+			D("iterating...");
+		}	
+		if(scope.alv._page.bDirty){
+			D("giving up...");
+		}
+
+		D(jq.html().replace(/^[\n\s]*$/gmi,''));
+
+//		D(scope._page.html().replace(/^[\n\s]*$/gmi,''));
 
 /*
 		D("--------------------------------------------");
@@ -181,6 +197,9 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	}
 
 	var _ = scopeIn.fscopeClone(scopeIn.sName + ".1");
+
+	// predeclare the _inner so that the element is bound
+	// to the _inner of its own scope
 	_.defvar("_inner");
 	_.defvar("_createInner");
 
@@ -199,8 +218,6 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		fjq = ffjq(_,jqScript);
 
 		var aAttr = faAttributes(jqScript);
-		// predeclare the _inner so that the element is bound
-		// to the _inner of its own scope
 		_.defvar("_element",sElement);
 		_.defvar("_attributes",aAttr);
 		each(aAttr, function(sVal, sVar){
@@ -209,26 +226,28 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	}
 
-	_._createInner = function(){
-		return function(_){
-			var vf = [];
-			each(jqScript.contents().get(),function(e){
-				vf.push(ffjqEvalElement(_, $(e)));
-			});
+	var ffjqCreateInner = function(_){
+		var vf = [];
+		each(jqScript.contents().get(),function(e){
+			vf.push(ffjqEvalElement(_, $(e)));
+		});
 
-			return function(){
-				var jqInner=$();
-				each(vf, function(f){
-					jqInner = jqInner.add(f(_).clone());
-				});
-				return jqInner;
-			};
-		}
+		return function(){
+			var jqInner=$();
+			each(vf, function(f){
+				jqInner = jqInner.add(f(_).clone());
+			});
+			return jqInner;
+		};
+	};
+
+	_._createInner = function(){
+		return ffjqCreateInner;
 	};
 
 
 	// quick alias for _._createInner(_);
-	_._inner = _._createInner(_);
+	_._inner = ffjqCreateInner(_);
 
 	return fjq;
 
