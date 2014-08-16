@@ -1,7 +1,9 @@
 var nsUtil = require("util");
 var D=console.log;
 var each = require("./each");
-var Scope = require("./Scope");
+var Scope = require("./LiveObject.js");
+var LiveValue = require("./LiveValue.js");
+var nsProcess = process;
 
 
 // ---------------------------------------------------------------------------
@@ -14,9 +16,14 @@ var nsFs = require('fs');
 fCreateDom(
 	"<page />",
 	function(err, window){
+		var sfl = nsProcess.argv[2] || "../examples/test-repeat.silk";
 		$ = require('jquery')(window);
-		var html = nsFs.readFileSync("test-foreach.silk").toString();;
-		$(html).appendTo("page");
+		var shtml = nsFs.readFileSync(sfl).toString();
+
+		shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
+		shtml = shtml.replace(/<\/defelt>/g,"</script>");
+
+		$("<!-- -->" + shtml).appendTo("page");
 
 		// get all script definitions?
 		var scope = new Scope("global");
@@ -28,17 +35,16 @@ fCreateDom(
 		scope.defvar("x",[1,2,3]);
 		scope.defvar("_page", ffjqEvalElement(scope, $("page")));
 
-		D($("<div></div>").append(scope._page).html());
+		D(scope._page.html().replace(/^[\n\s]*$/gmi,''));
 
+/*
 		D("--------------------------------------------");
-//		scope.times = 5;
 		scope.set("x",[1,4,3]);
-		D($("<div></div>").append(scope._page).html());
+		D(scope._page.html());
+*/
 
 	}
 );
-
-
 
 // ---------------------------------------------------------------------------
 var fCopyAttributes = function(jqTo, jqFrom){
@@ -71,6 +77,7 @@ var ffjqPassthrough = function(scope){
 			jq.attr(sVar,scope.alv[sVar].fxGet());
 		});
 		jq.append(scope._inner);
+
 		return jq;
 	}
 };
@@ -154,14 +161,13 @@ var ffjqEvalText = function(scope,jqScript){
 
 		each(vx,function(x){
 			if (typeof(x) === "function"){
-				vs.push(x(_));
+				x=x(_);
 			}
-			else{
-				vs.push(x);
-			}
+			vs.push(x);
 		});
 
 		var s=vs.join('');
+		s=s.replace(/\\\n/g,"");
 		return $("<div>").text(s).contents();
 	}
 };
@@ -176,6 +182,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	var _ = scopeIn.fscopeClone(scopeIn.sName + ".1");
 	_.defvar("_inner");
+	_.defvar("_createInner");
 
 	var fjq;
 
@@ -202,7 +209,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	}
 
-	_.defvar('_createInner', function(){
+	_._createInner = function(){
 		return function(_){
 			var vf = [];
 			each(jqScript.contents().get(),function(e){
@@ -217,7 +224,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 				return jqInner;
 			};
 		}
-	});
+	};
 
 
 	// quick alias for _._createInner(_);

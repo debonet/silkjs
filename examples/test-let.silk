@@ -1,0 +1,10 @@
+<script type="defelt" scope="_" name="let">
+	return function(){
+		return _._inner;
+	}
+</script>
+
+
+<let a="5">
+		 the value of a is {{_.a}}
+</let>

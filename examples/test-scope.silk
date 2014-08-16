@@ -1,1 +1,25 @@
-<a test="1"> THE CURRENT VALUE OF X IS {{_.test}}</a>
+<defelt name="a">
+	return function(){return _._inner;}
+</defelt>
+
+
+
+you should see 1 below here
+---------------------------
+
+<a test="1"> 
+	 {{_.test}}
+</a>
+
+you should see 1 2 1 below here 
+---------------------------
+
+<a test="1">
+	{{_.test}}
+	<a test="2">
+	 	{{_.test}}
+	</a>
+	{{_.test}}
+</a>
+
+

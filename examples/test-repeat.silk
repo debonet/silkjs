@@ -1,7 +1,7 @@
 <!-- repeat element -->
-<script type="defelt" scope="_" name="repeat" times="0">
+<defelt scope="_" name="repeat" times="0">
 	var vscope = [];
-	var scopeRepeat = new Scope("repeatscope");
+	var vlv    = [];
 
 	return function(){
 		var jq = $();
@@ -11,38 +11,38 @@
 
 		// delete exess
 		vscope = vscope.slice(0,c);
-		for (n=c; n<cAlloc; n++){
-			scopeRepeat.del(n);
-		}
+		vlv    = vlv.slice(0,c);
 
-		// make new ones
+		// make new ones, if needed
 		for (n=vscope.length; n<c; n++){
-			vscope[n] = _.fscopeClone();
+			vscope[n] = _.clone();
 			vscope[n].defvar("_index",n);
-			scopeRepeat.defvar(n,_._createInner(vscope[n]));
+			vlv[n] = new LiveValue("x",_._createInner(vscope[n]));
 		}
 
 		// eval and add
 		for (n=0; n<c; n++){
-			jq = jq.add(scopeRepeat[n]);
+			jq = jq.add(vlv[n].fxGet());
 		}
 		return jq;
 	};
-</script>
+</defelt>
 
 
-
-<repeat times="3">
-	fuukkk {{_._index}}
+See Simple Repeat 3 times
+-------------------------
+<repeat times="3">\
+	Simple Repeat {{_._index}}
 </repeat>
 
 
-
-<repeat times="3">
-	{{_._index}}
-	<repeat times="_._index+3">	{{_._index}}
+outer loop from 0 to 2, inner loop from 0 to outer_index+3 
+-------------------------
+<repeat times="3">\
+	outer loop {{_._index}}\
+	<repeat times="_._index+3">
+		 inner loop	{{_._index}}\
 	</repeat>
-	<test a="_._index" />
 </repeat>
 
 

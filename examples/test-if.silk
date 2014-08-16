@@ -1,19 +1,21 @@
 <!-- if element -->
-<script type="defelt" name="if" test="false">
+<defelt name="if" test="false">
 	return function(){
 		if (_.test){
 			return _._inner;
 		}
 		return $();
 	};
-</script>
+</defelt>
 
 
-<if test="false">
+you sould see "show this" below here
+------------------------------------
+<if test="false">\
 	dont show this
 </if>
 
-<if test="true">
+<if test="true">\
 	show this
 </if>
 
@@ -22,34 +24,38 @@
 </if>
 
 
-<!-- switch case -->
-<script type="defelt" name="case" test="true">
+<!-- switch/case -->
+<defelt name="case" test="true">
 	return function(){
-		if (!_.switchflag, _.test){
+		if (!_.switchflag && _.test){
 			_.switchflag = true;
 			return _._inner;
 		}
 		return $();
 	};
-</script>
+</defelt>
 
-<script type="defelt" name="switch">
+<defelt name="switch">
 	_.defvar('switchflag',false);
 	return function(){
 		return _._inner;
 	};
-</script>
+</defelt>
 
+
+
+you sould see "BB do show" below here
+------------------------------------
 
 <switch>
-	<case test="false">A</case>
-	<case test="false">B</case>
+	<case test="false">A dont show</case>
+	<case test="false">B donw show</case>
 	<case test="true">
 		<switch>
-			<case test="false">AA</case>
-			<case test="true" >BB</case>
-			<case test="false">CC</case>
-			<case test="false">DD</case>
+			<case test="false">AA dont show</case>
+			<case test="true" >BB do show</case>
+			<case test="false">CC dont show</case>
+			<case test="false">DD dont show</case>
 		</switch>
 	</case>
 	<case test="false">D</case>
