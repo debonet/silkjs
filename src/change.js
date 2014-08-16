@@ -1,7 +1,186 @@
 var nsUtil = require("util");
 var D=console.log;
-var each = require("./each");
-var Scope = require("./Scope");
+
+
+// ---------------------------------------------------------------------------
+var each = function(a,f){
+	for(var sKey in a){
+		if (a.hasOwnProperty(sKey)){
+			f(a[sKey],sKey,a);
+		}
+	}
+};
+
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+var LiveValue = function(s,x){
+	this.sName         = s;
+	this.x            = undefined;
+	this.vlvDependsOn  = [];
+	this.vlvListeners  = [];
+	this.xCached      = null;
+	this.bDirty        = false;
+	this.fSet(x);
+};
+
+
+// ---------------------------------------------------------------------------
+LiveValue.prototype.fSet = function(x){
+	this.fDirty();
+	// change function
+//	D("SET",this.sName,x);
+
+	this.x = x;
+}
+
+
+// ---------------------------------------------------------------------------
+LiveValue.prototype.fDirty = function(){	
+	// if we weren't already dirty we are now 
+	if (!this.bDirty){
+	
+		// so tell listensers
+		this.vlvListeners.forEach(function(lvListener){
+			lvListener.fDirty();
+		});
+
+		// mark dirtyness
+		this.bDirty = true;
+	}
+};
+
+// ---------------------------------------------------------------------------
+LiveValue.prototype.fRemoveListener = function(lv){
+	this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
+};
+
+// ---------------------------------------------------------------------------
+LiveValue.prototype.fAddListener = function(lv){
+	this.vlvListeners.push(lv);
+};
+
+
+// ---------------------------------------------------------------------------
+var kvlvDependsCache=[];
+
+LiveValue.prototype.fxGet = function(){
+
+//	D("GET",this.sName);
+
+	if(kvlvDependsCache.length){
+//		D("DEP",this.sName);
+		kvlvDependsCache[0].push(this);
+	}
+
+	if (this.bDirty){
+		if (typeof(this.x) === "function"){
+			var vlvDependsNew = [];
+			kvlvDependsCache.unshift(vlvDependsNew);
+			this.xCached = this.x();
+			kvlvDependsCache.shift();
+	
+			// mark all new dependencies
+			vlvDependsNew.forEach(function(vlDep){vlDep.nMark = 1;});
+	
+			// remove watches on any which are no longer dependencies
+			// and mark prexisting dependencies
+			var lv = this;
+			this.vlvDependsOn.forEach(function(lvDep){
+				if ( lvDep.nMark !==1 ){
+					lvDep.fRemoveListener(lv);
+				}
+				else {
+					lvDep.nMark = 2;
+				}
+			});
+	
+			// add watches on any new dependencies
+			// and remove all marks
+			vlvDependsNew.forEach(function(vlDep){
+				if(vlDep.nMark !== 2){
+					vlDep.fAddListener(lv);
+				}
+				delete vlDep.nMark;
+			});
+	
+			// update the dependency list
+			this.vlvDependsOn = vlvDependsNew;
+			this.bRedefined = false;
+		}
+		else{
+			this.xCached = this.x;
+		}	
+		this.bDirty = false;
+	}
+	return this.xCached;
+};
+
+
+
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+var Scope = function(s, scopeParent){
+	this.scopeParent = scopeParent;
+	this.sName = s;
+	this.alv = {};
+};
+
+// ---------------------------------------------------------------------------
+Scope.prototype.defvar = function(s,x){
+	if (s==="test"){	D("DEF",s,x);}
+	var scope = this;
+
+	this.alv[s] = new LiveValue(this.sName + ":" + s,x);
+
+	if (s==="test"){D("POSTSET",this.test);}
+};
+
+// ---------------------------------------------------------------------------
+Scope.prototype.get = function(s, xDefault){
+	if (s in this.alv){
+		return this.alv[s].fxGet();
+	}
+	if (this.scopeParent){
+		return this.scopeParent.get(s,xDefault);
+	}
+	return xDefault;
+};
+// ---------------------------------------------------------------------------
+Scope.prototype.set = function(s,x){
+	if (s in this.alv){
+		return this.alv[s].fSet(x);
+	}
+	if (this.scopeParent){
+		return this.scopeParent.set(s,x);
+	}
+	D("UNKNOWN VARIABLE ",s);
+};
+// ---------------------------------------------------------------------------
+Scope.prototype.del = function(s){
+	if (s in this.alv){
+		delete this.alv[s];
+		delete this[s];
+	}
+};
+
+// ---------------------------------------------------------------------------
+Scope.prototype.fscopeClone = function(s){
+	return new Scope(s, this);
+};
+
+// ---------------------------------------------------------------------------
+Scope.prototype.expr = function(x,sScope){
+	var sScope = sScope || "_";
+	var scope = this;
+	return eval("var " + sScope + "=scope;(function(){return " + x + "})");
+};
+
+
+
+
+
 
 
 
@@ -17,7 +196,7 @@ fCreateDom(
 	"<page />",
 	function(err, window){
 		$ = require('jquery')(window);
-		var html = nsFs.readFileSync("test-foreach.silk").toString();;
+		var html = nsFs.readFileSync("../examples/test-repeat.silk").toString();
 		$(html).appendTo("page");
 
 		// get all script definitions?
@@ -27,14 +206,13 @@ fCreateDom(
 			fDefElement(scope,$(e) );
 		});
 
-		scope.defvar("x",[1,2,3]);
+		scope.defvar("_index");
 		scope.defvar("_page", ffjqEvalElement(scope, $("page")));
 
-		D($("<div></div>").append(scope._page).html());
+		D($("<div></div>").append(scope.get('_page')).html());
+
 
 		D("--------------------------------------------");
-//		scope.times = 5;
-		scope.set("x",[1,4,3]);
 		D($("<div></div>").append(scope._page).html());
 
 	}
@@ -68,11 +246,11 @@ var faAttributes = function(jq){
 // ---------------------------------------------------------------------------
 var ffjqPassthrough = function(scope){
 	return function(){
-		var jq = $("<" + scope._element + ">");
-		each(scope._attributes, function(sVal, sVar){
-			jq.attr(sVar,scope.alv[sVar].fxGet());
+		var jq = $("<" + scope.get('_element') + ">");
+		each(scope.get('_attributes'), function(sVal, sVar){
+			jq.attr(sVar,scope.get(sVar));
 		});
-		jq.append(scope._inner);
+		jq.append(scope.get('_inner'));
 		return jq;
 	}
 };
@@ -91,15 +269,14 @@ var fsUnescape = function(s){
 
 // ---------------------------------------------------------------------------
 var fDefElement = function(scope,jq){
+
 	var sBody = jq.html();
 
 	var aAttr = faAttributes(jq);
 	var sName = aAttr["name"];
-	var sScope = aAttr["scope"] || "_";
-	var sQuery = aAttr["query"] || "jq";
+	var sScope = aAttr["scope"];
 	delete aAttr["name"];
 	delete aAttr["scope"];
-	delete aAttr["query"];
 	
 	var afClosure = {};
 	each(aAttr, function(sVal, sVar){
@@ -111,8 +288,7 @@ var fDefElement = function(scope,jq){
 	sBody = fsUnescape(sBody);
 
 	// using this eval trick gives us a closure over $ 
-	var f=eval("(function(" + sScope + "," + sQuery + "){" + sBody +"})");
-//	var f = new Function(sScope, sBody);
+	var f=eval("(function(" + sScope + "){" + sBody +"})");
 
 	scope.defvar(
 		sName,
@@ -120,14 +296,14 @@ var fDefElement = function(scope,jq){
 			return function(scopeIn){
 				// arguments
 				each(afClosure, function(fClosure, sVar){
-//					if (!(sVar in scope.alv)){
-						scopeIn.defvar(sVar, fClosure);
-//					}
+					scopeIn.defvar(sVar, fClosure);
 				});
 				return f(scopeIn);
 			}
 		}
 	);
+	D("scope",scope);
+
 };
 
 // ---------------------------------------------------------------------------
@@ -149,9 +325,7 @@ var ffjqEvalText = function(scope,jqScript){
 	};
 	vx.push(s.slice(n));
 
-
 	return function(_){
-
 		var vs=[];
 
 		each(vx,function(x){
@@ -170,27 +344,24 @@ var ffjqEvalText = function(scope,jqScript){
 
 // ---------------------------------------------------------------------------
 var ffjqEvalElement = function(scopeIn,jqScript){
-	var nNodeType = jqScript.get()[0].nodeType;
-	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
-	if (nNodeType === 8 || jqScript.length === 0 || sElement === "script"){
+	var sElement = (jqScript.prop('tagName')+"").toLowerCase();
+	if (jqScript.length === 0 || sElement === "script"){
 		return function(){return $();};
 	}
 
 	var _ = scopeIn.fscopeClone(scopeIn.sName + ".1");
+
 	_.defvar("_inner");
 
 	var fjq;
 
-	if (nNodeType === 3){
+	if (jqScript.get()[0].nodeType === 3){
 		fjq = ffjqEvalText(_,jqScript);
 	}
 	else{
 		// evaluate element before its children
-		var ffjq = (
-			(sElement in _.alv)
-				? _.alv[sElement].fxGet()
-				: ffjqPassthrough
-		);
+		var ffjq = _.get(sElement, ffjqPassthrough);
+
 		fjq = ffjq(_,jqScript);
 
 		var aAttr = faAttributes(jqScript);
@@ -204,17 +375,17 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	}
 
-	_.defvar('_createInner', function(){
-		return function(_){
+	_.defvar("_createInner", function(){
+		return function(_2){
 			var vf = [];
 			each(jqScript.contents().get(),function(e){
-				vf.push(ffjqEvalElement(_, $(e)));
+				vf.push(ffjqEvalElement(_2, $(e)));
 			});
 
 			return function(){
 				var jqInner=$();
 				each(vf, function(f){
-					jqInner = jqInner.add(f(_).clone());
+					jqInner = jqInner.add(f(_2).clone());
 				});
 				return jqInner;
 			};
@@ -223,7 +394,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 
 	// quick alias for _._createInner(_);
-	_._inner = _._createInner(_);
+	_.set("_inner", _.get("_createInner")(_));
 
 	return fjq;
 

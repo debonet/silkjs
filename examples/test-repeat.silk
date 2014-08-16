@@ -6,8 +6,9 @@
 	return function(){
 		var jq = $();
 		var n;
-		var c = _.times;
+		var c = _.get('times');
 		var cAlloc = vscope.length;
+
 
 		// delete exess
 		vscope = vscope.slice(0,c);
@@ -19,12 +20,12 @@
 		for (n=vscope.length; n<c; n++){
 			vscope[n] = _.fscopeClone();
 			vscope[n].defvar("_index",n);
-			scopeRepeat.defvar(n,_._createInner(vscope[n]));
+			scopeRepeat.defvar(n,_.get('_createInner')(vscope[n]));
 		}
 
 		// eval and add
 		for (n=0; n<c; n++){
-			jq = jq.add(scopeRepeat[n]);
+			jq = jq.add(scopeRepeat.get(n));
 		}
 		return jq;
 	};
@@ -33,16 +34,16 @@
 
 
 <repeat times="3">
-	fuukkk {{_._index}}
+	fuukkk {{_.get('_index')}}
 </repeat>
 
 
 
 <repeat times="3">
-	{{_._index}}
-	<repeat times="_._index+3">	{{_._index}}
+	{{_.get('_index')}}
+	<repeat times="_.get('_index')+3">	{{_.get('_index')}}
 	</repeat>
-	<test a="_._index" />
+	<test a="_.get('_index')" />
 </repeat>
 
 
