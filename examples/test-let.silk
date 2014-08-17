@@ -1,10 +1,10 @@
-<script type="defelt" scope="_" name="let">
+<defelt name="let">
 	return function(){
 		return _._inner;
 	}
-</script>
+</defelt>
 
 
 <let a="5">
-		 the value of a is {{_.a}}
+	 the value of a is {{_.a}}
 </let>

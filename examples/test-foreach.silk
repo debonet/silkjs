@@ -4,7 +4,7 @@
 	var alv = {};
 
 	return function(){
-		var jq = $();
+		var jqOut = $();
 
 		var a=_.items;
 
@@ -18,8 +18,8 @@
 
 		each(a,function(x,s){
 			if (!(s in ascope)){
-				ascope[s] = _.clone();
-				ascope[s].defvar("_item",_.expr("_.items['" + s + "']"));
+				ascope[s] = scope.clone();
+				ascope[s].defvar("_item",scope.expr("_.items['" + s + "']"));
 				ascope[s].defvar("_index",s);
 				alv[s] = new LiveValue("x",_._createInner(ascope[s]));
 			}
@@ -27,9 +27,9 @@
 
 		// eval and add
 		each(a,function(x,s){
-			jq = jq.add(alv[s].fxGet());
+			jqOut = jqOut.add(alv[s].fxGet());
 		});
-		return jq;
+		return jqOut;
 	};
 </defelt>
 

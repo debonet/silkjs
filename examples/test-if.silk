@@ -25,6 +25,15 @@ you sould see "show this" below here
 
 
 <!-- switch/case -->
+<defelt name="switch">
+	defmutable('switchflag', false); // non watched!
+	return function(){
+		return _._inner;
+	};
+</defelt>
+
+
+
 <defelt name="case" test="true">
 	return function(){
 		if (!_.switchflag && _.test){
@@ -32,13 +41,6 @@ you sould see "show this" below here
 			return _._inner;
 		}
 		return $();
-	};
-</defelt>
-
-<defelt name="switch">
-	_.switchflag = false; // non watched!
-	return function(){
-		return _._inner;
 	};
 </defelt>
 
@@ -55,7 +57,7 @@ you sould see "BB do show" below here
 			<case test="false">AA dont show</case>
 			<case test="true" >BB do show</case>
 			<case test="false">CC dont show</case>
-			<case test="false">DD dont show</case>
+			<case test="true" >DD dont show</case>
 		</switch>
 	</case>
 	<case test="false">D</case>

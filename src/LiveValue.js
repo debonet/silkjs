@@ -2,13 +2,14 @@ var D=console.log;
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var LiveValue = function(s,x){
+var LiveValue = function(s,x,bMutable){
 	this.sName         = s+Math.floor(Math.random()*1000);
 	this._x            = undefined;
 	this.vlvDependsOn  = [];
 	this.vlvListeners  = [];
 	this._xCached      = null;
 	this.bDirty        = false;
+	this.bMutable      = !!bMutable;
 	this.fSet(x);
 };
 
@@ -59,10 +60,9 @@ var klvListeners = [];
 var cDepth = 0;
 LiveValue.prototype.fxGet = function(){
 
-	if(kvlvDependsCache.length){
+	if(kvlvDependsCache.length && !this.bMutable){
 		var c = kvlvDependsCache.length;
 		kvlvDependsCache[c-1].push(this);
-//		D("  LISTENER",this.sName, klvListeners[klvListeners.length-1].sName);
 		this.fAddListener(klvListeners[c-1]);
 	}
 

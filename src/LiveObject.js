@@ -1,6 +1,7 @@
 var D=console.log;
 var each = require("./each");
 var LiveValue = require("./LiveValue");
+var ffBind = require("./ffBind");
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
@@ -8,6 +9,7 @@ var LiveObject = function(s){
 	this.sName = s;
 	this.alv = {};
 	this.vlvListeners  = [];
+	this.fRemakeAccessLayer();
 };
 
 
@@ -28,22 +30,46 @@ LiveObject.prototype.fAddListener = function(lv){
 	this.vlvListeners.push(lv);
 };
 
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fRemakeAccessLayer = function(){
+	delete this._;
+	this._ = {};
+
+	var lo = this;
+	each(this.alv, function(x,s){
+		Object.defineProperty(
+			lo._,	s, {
+				get : function(){return lo.get(s);},
+				set : function(x){return lo.set(s,x);},
+				configurable: true,
+				enumerable: true,
+				writeable : false
+			}
+		);
+	});
+	
+	Object.freeze(this._);
+};
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.defvar = function(s,x){
-//	D("DEF",this.sName,s);
-	var lo = this;
-	if (!Object.getOwnPropertyDescriptor(this,s)){
-		Object.defineProperty(
-			this,	s, {
-				get: function() {return lo.get(s);},
-				set: function(x){return lo.set(s,x);},
-				configurable: true
-			}
-		);
-	}
+	var bNew = !(s in this.alv);
+	this.alv[s] = new LiveValue(this.sName + ":" + s, x);
 
-	this.alv[s] = new LiveValue(this.sName + ":" + s,x);
+	if (bNew){
+		this.fRemakeAccessLayer();
+	}
+};
+
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.defmutable = function(s,x){
+	var bNew = !(s in this.alv);
+	this.alv[s] = new LiveValue(this.sName + ":" + s, x, true);
+
+	if (bNew){
+		this.fRemakeAccessLayer();
+	}
 };
 
 // ---------------------------------------------------------------------------
@@ -63,10 +89,26 @@ LiveObject.prototype.set = function(s,x){
 	D("UNKNOWN VARIABLE ",this.sName,s);
 };
 // ---------------------------------------------------------------------------
-LiveObject.prototype.del = function(s){
+LiveObject.prototype.delvar = function(s){
 	if (s in this.alv){
-		delete this[s];
+		delete this.alv[s];
+		lo.fRemakeAccessLayer();
+		return;
 	}
+	D("UNKNOWN VARIABLE ",this.sName,s);
+};
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.checkvar = function(s){
+	return s in this.alv;
+};
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fbIsDirty = function(s){
+	if (s in this.alv){
+		return this.alv[s].bDirty;
+	}
+	D("UNKNOWN VARIABLE ",this.sName,s);
 };
 
 // ---------------------------------------------------------------------------
@@ -75,24 +117,26 @@ LiveObject.prototype.floClone = function(s){
 
 	each(this.alv, function(lv, slv){
 		lo.alv[slv]=lv;
-
-		Object.defineProperty(
-			lo,	slv, {
-				get: function() {return lo.get(slv);},
-				set: function(x){return lo.set(slv,x);},
-				configurable: true
-			}
-		);
 	});
 
+	lo.fRemakeAccessLayer();
 	return lo;
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.expr = function(x,sLiveObject){
+LiveObject.prototype.expr = function(x){
 	var sLiveObject = sLiveObject || "_";
 	var lo = this;
-	return eval("var " + sLiveObject + "=lo;(function(){return " + x + "})");
+	var sScope = "lo";
+	return eval(
+		""
+			+ "var defvar     = ffBind(" + sScope + ", 'defvar');\n"
+			+ "var defmutable = ffBind(" + sScope + ", 'defmutable');\n"
+			+ "var delvar     = ffBind(" + sScope + ", 'delvar');\n"
+			+ "var checkvar   = ffBind(" + sScope + ", 'checkvar');\n"
+			+ "var _          = " + sScope + "._;\n"
+			+ "(function(){return " + x + "})"
+	);
 };
 
 

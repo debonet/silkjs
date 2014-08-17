@@ -1,31 +1,34 @@
 <!-- repeat element -->
-<defelt scope="_" name="repeat" times="0">
+<defelt name="repeat" times="0">
 	var vscope = [];
-	var vlv    = [];
+	var scopeInner = new Scope();
 
 	return function(){
-		var jq = $();
+		var jqOut = $();
 		var n;
 		var c = _.times;
 		var cAlloc = vscope.length;
 
 		// delete exess
 		vscope = vscope.slice(0,c);
-		vlv    = vlv.slice(0,c);
+		for (n=c; n<cAlloc; n++){
+			scopeInner.delvar(n);
+		}				
 
 		// make new ones, if needed
 		for (n=vscope.length; n<c; n++){
-			vscope[n] = _.clone();
+			vscope[n] = scope.clone();
 			vscope[n].defvar("_index",n);
-			vlv[n] = new LiveValue("x",_._createInner(vscope[n]));
+			scopeInner.defvar(n, compile(vscope[n],jq.contents()));
 		}
 
 		// eval and add
 		for (n=0; n<c; n++){
-			jq = jq.add(vlv[n].fxGet());
+			jqOut = jqOut.add(scopeInner._[n]);
 		}
-		return jq;
+		return jqOut;
 	};
+
 </defelt>
 
 

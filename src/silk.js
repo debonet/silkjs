@@ -1,9 +1,12 @@
+"use strict";
+
 var nsUtil = require("util");
 var D=console.log;
 var each = require("./each");
-var Scope = require("./LiveObject.js");
-var LiveValue = require("./LiveValue.js");
+var Scope = require("./LiveObject");
+var LiveValue = require("./LiveValue");
 var nsProcess = process;
+var ffBind = require("./ffBind");
 
 
 // ---------------------------------------------------------------------------
@@ -38,26 +41,18 @@ fCreateDom(
 
 		var jq;
 		for (var n=0; n<10; n++){
-			jq = scope._page;
-			if (!scope.alv._page.bDirty){
+			jq = scope._._page;
+			if (!scope.fbIsDirty("_page")){
 				break;
 			}
 			D(jq.html().replace(/^[\n\s]*$/gmi,''));
 			D("iterating...");
 		}	
-		if(scope.alv._page.bDirty){
+		if (scope.fbIsDirty("_page")){
 			D("giving up...");
 		}
 
 		D(jq.html().replace(/^[\n\s]*$/gmi,''));
-
-//		D(scope._page.html().replace(/^[\n\s]*$/gmi,''));
-
-/*
-		D("--------------------------------------------");
-		scope.set("x",[1,4,3]);
-		D(scope._page.html());
-*/
 
 	}
 );
@@ -75,10 +70,10 @@ var fCopyAttributes = function(jqTo, jqFrom){
 // ---------------------------------------------------------------------------
 var faAttributes = function(jq){
 	var a = {};
-	each(jq.prop("attributes"), function(aAttr){
+	each(jq[0].attributes, function(aAttr){
 		var sAttr = aAttr["name"];
 		var sVal = aAttr["value"];
-		if (sAttr){
+		if (sAttr && typeof(sAttr) === "string"){
 			a[sAttr] = sVal;
 		}
 	});
@@ -88,11 +83,12 @@ var faAttributes = function(jq){
 // ---------------------------------------------------------------------------
 var ffjqPassthrough = function(scope){
 	return function(){
-		var jq = $("<" + scope._element + ">");
+		var _ = scope._;
+		var jq = $("<" + _._element + ">");
 		each(scope._attributes, function(sVal, sVar){
-			jq.attr(sVar,scope.alv[sVar].fxGet());
+			jq.attr(sVar,_[sVar]);
 		});
-		jq.append(scope._inner);
+		jq.append(_._inner);
 
 		return jq;
 	}
@@ -110,17 +106,19 @@ var fsUnescape = function(s){
 		.replace(/&#x27;/gim,"'");
 };
 
+
 // ---------------------------------------------------------------------------
 var fDefElement = function(scope,jq){
 	var sBody = jq.html();
 
 	var aAttr = faAttributes(jq);
 	var sName = aAttr["name"];
-	var sScope = aAttr["scope"] || "_";
-	var sQuery = aAttr["query"] || "jq";
+	var sScope = "scope";
+	var sQuery = "jq";
 	delete aAttr["name"];
 	delete aAttr["scope"];
 	delete aAttr["query"];
+
 	
 	var afClosure = {};
 	each(aAttr, function(sVal, sVar){
@@ -131,21 +129,29 @@ var fDefElement = function(scope,jq){
 
 	sBody = fsUnescape(sBody);
 
+
 	// using this eval trick gives us a closure over $ 
-	var f=eval("(function(" + sScope + "," + sQuery + "){" + sBody +"})");
-//	var f = new Function(sScope, sBody);
+	var f=eval(
+		"(function(" + sScope + "," + sQuery + "){\n"
+			+ "var defvar     = ffBind(" + sScope + ", 'defvar');\n"
+			+ "var defmutable = ffBind(" + sScope + ", 'defmutable');\n"
+			+ "var delvar     = ffBind(" + sScope + ", 'delvar');\n"
+			+ "var checkvar   = ffBind(" + sScope + ", 'checkvar');\n"
+			+ "var _          = " + sScope + "._;\n"
+			+ sBody 
+			+"\n})"
+	);
+
 
 	scope.defvar(
 		sName,
 		function(){
-			return function(scopeIn){
+			return function(scopeIn,jqIn){
 				// arguments
 				each(afClosure, function(fClosure, sVar){
-//					if (!(sVar in scope.alv)){
-						scopeIn.defvar(sVar, fClosure);
-//					}
+					scopeIn.defvar(sVar, fClosure);
 				});
-				return f(scopeIn);
+				return f(scopeIn,jqIn);
 			}
 		}
 	);
@@ -171,13 +177,13 @@ var ffjqEvalText = function(scope,jqScript){
 	vx.push(s.slice(n));
 
 
-	return function(_){
+	return function(){
 
 		var vs=[];
 
 		each(vx,function(x){
 			if (typeof(x) === "function"){
-				x=x(_);
+				x=x(scope);
 			}
 			vs.push(x);
 		});
@@ -189,6 +195,25 @@ var ffjqEvalText = function(scope,jqScript){
 };
 
 // ---------------------------------------------------------------------------
+var ffjqEvalElements = function(scope, jq){
+	var vf = [];
+	each(jq.get(),function(e){
+		vf.push(ffjqEvalElement(scope, $(e)));
+	});
+
+	return function(){
+		var jqInner=$();
+		each(vf, function(f){
+			jqInner = jqInner.add(f(scope).clone());
+		});
+		return jqInner;
+	};
+};
+
+var compile = ffjqEvalElements;
+
+
+// ---------------------------------------------------------------------------
 var ffjqEvalElement = function(scopeIn,jqScript){
 	var nNodeType = jqScript.get()[0].nodeType;
 	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
@@ -196,58 +221,45 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		return function(){return $();};
 	}
 
-	var _ = scopeIn.fscopeClone(scopeIn.sName + ".1");
+	var scope = scopeIn.fscopeClone(scopeIn.sName + ".1");
+	var _ = scope._;
 
 	// predeclare the _inner so that the element is bound
 	// to the _inner of its own scope
-	_.defvar("_inner");
-	_.defvar("_createInner");
+	scope.defvar("_inner");
+	scope.defvar("_createInner");
 
 	var fjq;
 
 	if (nNodeType === 3){
-		fjq = ffjqEvalText(_,jqScript);
+		fjq = ffjqEvalText(scope,jqScript);
 	}
 	else{
 		// evaluate element before its children
 		var ffjq = (
-			(sElement in _.alv)
-				? _.alv[sElement].fxGet()
+			scope.checkvar(sElement)
+				? scope.get(sElement)
 				: ffjqPassthrough
 		);
-		fjq = ffjq(_,jqScript);
 
+		fjq = ffjq(scope,jqScript);
 		var aAttr = faAttributes(jqScript);
-		_.defvar("_element",sElement);
-		_.defvar("_attributes",aAttr);
+		scope.defvar("_element",sElement);
+		scope.defvar("_attributes",aAttr);
 		each(aAttr, function(sVal, sVar){
-			_.defvar(sVar, scopeIn.expr(sVal));
+			scope.defvar(sVar, scopeIn.expr(sVal));
 		});
-
 	}
 
-	var ffjqCreateInner = function(_){
-		var vf = [];
-		each(jqScript.contents().get(),function(e){
-			vf.push(ffjqEvalElement(_, $(e)));
-		});
-
-		return function(){
-			var jqInner=$();
-			each(vf, function(f){
-				jqInner = jqInner.add(f(_).clone());
-			});
-			return jqInner;
-		};
-	};
-
-	_._createInner = function(){
-		return ffjqCreateInner;
+	scope._._createInner = function(){
+		return function(scope){
+			return ffjqCreateInner(scope,jqScript);
+		}
 	};
 
 
 	// quick alias for _._createInner(_);
-	_._inner = ffjqCreateInner(_);
+	scope._._inner = ffjqEvalElements(scope, jqScript.contents());
 
 	return fjq;
 

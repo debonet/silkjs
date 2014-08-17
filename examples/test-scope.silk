@@ -1,5 +1,7 @@
 <defelt name="a">
-	return function(){return _._inner;}
+	return function(){
+		return _._inner;
+	}
 </defelt>
 
 
