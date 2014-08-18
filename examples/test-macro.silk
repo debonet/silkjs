@@ -1,0 +1,65 @@
+<!-- defmacro -->
+<defelt name="defmacro">
+	return function(){
+		var _ = scope._;
+		var sName = _.name;
+		_._macros[sName] = {
+			jq : jq.contents(),
+			attributes : _._attributes
+		};
+		return $();
+	};
+</defelt>
+
+<!-- callmacro -->
+<defelt name="callmacro">
+	return function(){
+		var _ = scope._;
+		var aMacro = _._macros[_.name];
+		
+		if (!aMacro){
+			return $();
+		}
+
+		each(aMacro.attributes, function(sVal, sVar){
+			if (!scope.localvar(sVar)){
+				scope.defvar(sVar, sVal);
+			}
+		});
+		return compile(scope, aMacro.jq)();
+	};
+</defelt>
+
+
+
+
+
+
+Here's a simple macro
+
+<defmacro name="'testmacro'" a="1" ccc="5">\
+	the value of arg a is {{_.a}} and ccc is {{_.ccc}}\
+</defmacro>
+
+<callmacro name="'testmacro'" />
+<callmacro name="'testmacro'" a="2"/>
+<callmacro name="'testmacro'" a="2" ccc="7"/>
+
+
+macro's can be called from inside
+<a a="3">
+	<callmacro name="'testmacro'" />
+</a>
+
+
+
+Macros can call macros
+
+<defmacro name="'testmacro2'" a="1" ccc="5">\
+vvvvvvvv
+	<callmacro name="'testmacro'" a="_.a"/>
+	<callmacro name="'testmacro'" a="3"/>
+^^^^^^^^
+</defmacro>
+
+<callmacro name="'testmacro2'" a="2" ccc="7"/>

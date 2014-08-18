@@ -8,6 +8,7 @@ var ffBind = require("./ffBind");
 var LiveObject = function(s){
 	this.sName = s;
 	this.alv = {};
+	this.abLocal = {};
 	this.vlvListeners  = [];
 	this.fRemakeAccessLayer();
 };
@@ -55,6 +56,7 @@ LiveObject.prototype.fRemakeAccessLayer = function(){
 LiveObject.prototype.defvar = function(s,x){
 	var bNew = !(s in this.alv);
 	this.alv[s] = new LiveValue(this.sName + ":" + s, x);
+	this.abLocal[s] = true;
 
 	if (bNew){
 		this.fRemakeAccessLayer();
@@ -101,6 +103,11 @@ LiveObject.prototype.delvar = function(s){
 // ---------------------------------------------------------------------------
 LiveObject.prototype.checkvar = function(s){
 	return s in this.alv;
+};
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.localvar = function(s){
+	return s in this.abLocal;
 };
 
 // ---------------------------------------------------------------------------

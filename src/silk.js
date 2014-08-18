@@ -37,6 +37,7 @@ fCreateDom(
 		});
 
 		scope.defvar("x",[1,2,3]);
+		scope.defmutable("_macros",{});
 		scope.defvar("_page", ffjqEvalElement(scope, $("page")));
 
 		var jq;
@@ -73,7 +74,7 @@ var faAttributes = function(jq){
 	each(jq[0].attributes, function(aAttr){
 		var sAttr = aAttr["name"];
 		var sVal = aAttr["value"];
-		if (sAttr && typeof(sAttr) === "string"){
+		if (sAttr && typeof(sAttr) === "string" && sVal){
 			a[sAttr] = sVal;
 		}
 	});
@@ -176,9 +177,7 @@ var ffjqEvalText = function(scope,jqScript){
 	};
 	vx.push(s.slice(n));
 
-
 	return function(){
-
 		var vs=[];
 
 		each(vx,function(x){
@@ -243,6 +242,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		);
 
 		fjq = ffjq(scope,jqScript);
+
 		var aAttr = faAttributes(jqScript);
 		scope.defvar("_element",sElement);
 		scope.defvar("_attributes",aAttr);
@@ -262,5 +262,4 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	scope._._inner = ffjqEvalElements(scope, jqScript.contents());
 
 	return fjq;
-
 };

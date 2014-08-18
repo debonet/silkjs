@@ -1,5 +1,5 @@
 module.exports = function(o,sf){
 	return function(){
-		o[sf].apply(o,arguments);
+		return o[sf].apply(o,arguments);
 	}
 };
