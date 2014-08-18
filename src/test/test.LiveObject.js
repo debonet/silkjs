@@ -72,3 +72,34 @@ describe("LiveObject", function(){
 });
 
 		
+
+
+describe("LiveObject Scoping", function(){
+	it("should do simple scoping", function(){
+		var lo = new LiveObject("scope1");
+		lo.defvar("a",1);
+		assert.equal(lo._.a,1);
+
+		var lo2 = lo.clone("scope2");
+		assert.equal(lo2._.a,1);
+		assert.equal(lo._.a,1);
+
+		lo2.defvar("a",2);
+		assert.equal(lo2._.a,2);
+		assert.equal(lo._.a,1);
+
+		lo2.defvar("b",3);
+		assert.equal(lo2._.b,3);
+		assert.equal(lo._.b,undefined);
+
+
+		lo2.delvar("a");
+		assert.equal(lo2._.a,1);
+
+
+		lo.defvar("c",20);
+		assert.equal(lo2._.c,20);
+		assert.equal(lo2.get('c'),20);
+		
+	});
+});

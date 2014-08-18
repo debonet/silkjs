@@ -32,12 +32,6 @@ fCreateDom(
 		// get all script definitions?
 		var scope = new Scope("global");
 
-		$("script[type=defelt]").each(function(n,e){
-			fDefElement(scope,$(e) );
-		});
-
-		scope.defvar("x",[1,2,3]);
-		scope.defmutable("_macros",{});
 		scope.defvar("_page", ffjqEvalElement(scope, $("page")));
 
 		var jq;
@@ -71,6 +65,10 @@ var fCopyAttributes = function(jqTo, jqFrom){
 // ---------------------------------------------------------------------------
 var faAttributes = function(jq){
 	var a = {};
+	if (!jq.length){
+		return a;
+	}
+
 	each(jq[0].attributes, function(aAttr){
 		var sAttr = aAttr["name"];
 		var sVal = aAttr["value"];
@@ -158,6 +156,34 @@ var fDefElement = function(scope,jq){
 	);
 };
 
+
+// ---------------------------------------------------------------------------
+var fDefMacro = function(scope, jq){
+	var aAttr = faAttributes(jq);
+	var sName = aAttr["name"];
+	var sScope = "scope";
+	var sQuery = "jq";
+	delete aAttr["name"];
+	delete aAttr["scope"];
+	delete aAttr["query"];
+
+	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
+	scope.defvar(sName, function(){
+		return function(scopeIn, jqIn){
+			return function(){
+				each(aAttr, function(sVal, sVar){
+					scopeIn.defvar(sVar, scopeIn.expr(sVal));
+				});
+				each(faAttributes(jqIn), function(sVal, sVar){
+					scopeIn.defvar(sVar, scopeIn.expr(sVal));
+				});
+				return compile(scopeIn, jq.contents())();
+			};
+		};
+	});
+
+};
+
 // ---------------------------------------------------------------------------
 var reExpr = /\{\{(.*?)\}\}/g;
 var ffjqEvalText = function(scope,jqScript){
@@ -216,44 +242,54 @@ var compile = ffjqEvalElements;
 var ffjqEvalElement = function(scopeIn,jqScript){
 	var nNodeType = jqScript.get()[0].nodeType;
 	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
-	if (nNodeType === 8 || jqScript.length === 0 || sElement === "script"){
+
+	if (nNodeType === 8 
+			|| jqScript.length === 0 
+			|| sElement === "script" 
+			|| sElement ==="defmacro"
+		 ){
 		return function(){return $();};
 	}
 
-	var scope = scopeIn.fscopeClone(scopeIn.sName + ".1");
-	var _ = scope._;
+	if (nNodeType === 3){
+		return  ffjqEvalText(scopeIn, jqScript);
+	}
+
+	var scope = scopeIn.fscopeClone(scopeIn.sName + "." + sElement);
+
+	// find defelt
+	$("script[type=defelt]").each(function(n,e){
+		fDefElement(scope,$(e) );
+	});
+
+	// find defmacros
+	jqScript.children("defmacro").each(function(n,e){
+		fDefMacro(scope,$(e));
+	});
 
 	// predeclare the _inner so that the element is bound
 	// to the _inner of its own scope
 	scope.defvar("_inner");
 	scope.defvar("_createInner");
 
-	var fjq;
+	var ffjq = (
+		scopeIn.checkvar(sElement)
+			? scopeIn.get(sElement)
+			: ffjqPassthrough
+	);
 
-	if (nNodeType === 3){
-		fjq = ffjqEvalText(scope,jqScript);
-	}
-	else{
-		// evaluate element before its children
-		var ffjq = (
-			scope.checkvar(sElement)
-				? scope.get(sElement)
-				: ffjqPassthrough
-		);
+	var fjq = ffjq(scope,jqScript);
 
-		fjq = ffjq(scope,jqScript);
-
-		var aAttr = faAttributes(jqScript);
-		scope.defvar("_element",sElement);
-		scope.defvar("_attributes",aAttr);
-		each(aAttr, function(sVal, sVar){
-			scope.defvar(sVar, scopeIn.expr(sVal));
-		});
-	}
+	var aAttr = faAttributes(jqScript);
+	scope.defvar("_element",sElement);
+	scope.defvar("_attributes",aAttr);
+	each(aAttr, function(sVal, sVar){
+		scope.defvar(sVar, scopeIn.expr(sVal));
+	});
 
 	scope._._createInner = function(){
 		return function(scope){
-			return ffjqCreateInner(scope,jqScript);
+			return ffjqEvalElements(scope,jqScript.contents());
 		}
 	};
 
