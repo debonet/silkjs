@@ -1,0 +1,47 @@
+<html>
+<head>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="index.js"></script>
+</head>
+<body>
+
+
+<b>Hello world</b><br>
+
+<defmacro name="x" a="'default'">
+	this is a test {{_.a}}
+</defmacro>
+
+<x></x><br>
+<x a='2'></x><br>
+<x a='3'></x><br>
+<x a='4'></x><br>
+
+
+<script type="defelt" name="include">
+	defvar("_shtmlLoaded", $("<div>loading...</div>"));
+	defvar("_bLoaded", false);
+
+	return function(){
+		var _ = scope._;
+
+		if (!_._bLoaded){
+			$.ajax({
+				url: _.file,
+				success: function(sData, sStatus){
+					console.log("loaded...");
+					_._shtmlLoaded = compile(scope,$("<div>" + sData + "</div>"))();
+					_._bLoaded = true;
+					Silk.digest();
+				}
+			});
+		}
+		return _._shtmlLoaded;
+	};
+</script>
+
+
+<include file="'sample.silk'"></include>
+
+</body>
+</html>

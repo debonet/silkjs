@@ -1,0 +1,53 @@
+<!--
+
+Heres a simple macro
+
+<defmacro name="testmacro" a="1" ccc="5">\
+	the value of arg a is {{_.a}} and ccc is {{_.ccc}}\
+</defmacro>
+
+<testmacro />
+<testmacro a="2"/>
+<testmacro a="2" ccc="7"/>
+
+Macros can be called from inside
+<a a="3">
+	<testmacro />
+</a>
+
+
+
+Macros can call macros
+
+<defmacro name="testmacro2" a="1" ccc="5">\
+vvvvvvvv
+	<testmacro a="_.a" />
+	<testmacro a="3" />
+^^^^^^^^
+</defmacro>
+
+<testmacro2 a="2" ccc="7" />
+
+
+
+
+-->
+
+
+<defmacro name="localmacro">
+	As defined globally
+</defmacro>
+
+<localmacro />
+
+
+<a>
+	<defmacro name="localmacro">
+		As defined locally
+	</defmacro>
+
+	<localmacro />
+</a>
+
+
+<localmacro />
