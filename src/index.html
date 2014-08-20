@@ -18,8 +18,9 @@
 <x a='4'></x><br>
 
 
+<!--  include --> 
 <script type="defelt" name="include">
-	defvar("_shtmlLoaded", $("<div>loading...</div>"));
+	defvar("_shtmlLoaded");
 	defvar("_bLoaded", false);
 
 	return function(){
@@ -36,12 +37,14 @@
 				}
 			});
 		}
-		return _._shtmlLoaded;
+		return _._bLoaded ? _._shtmlLoaded : _._inner;
 	};
 </script>
 
 
-<include file="'sample.silk'"></include>
+<include file="'sample.silk'">
+	loading...
+</include>
 
 </body>
 </html>

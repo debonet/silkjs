@@ -201,40 +201,41 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	var nNodeType = jqScript.get()[0].nodeType;
 	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
 
-	if (nNodeType === 8 
-			|| jqScript.length === 0 
-			|| sElement === "script" 
-			|| sElement ==="defmacro"
-		 ){
+	if (nNodeType === 8 || jqScript.length === 0){
 		return function(){return $();};
 	}
 
+	// defelt
+	if (sElement === "script" && jqScript.attr("type") === "defelt"){
+		// find defelt
+		fDefElement(scopeIn,jqScript );
+		return function(){return $();};
+	}
+ 
+	// defmacro
+	if (sElement === "defmacro"){
+		fDefMacro(scope,jqScript);
+		return function(){return $();};
+	}
+
+	// text
 	if (nNodeType === 3){
 		return  ffjqEvalText(scopeIn, jqScript);
 	}
 
+	// elements
 	var scope = scopeIn.fscopeClone(scopeIn.sName + "." + sElement);
-
-	// find defelt
-	jqScript.find("script[type=defelt]").each(function(n,e){
-		fDefElement(scope,$(e) );
-	});
-
-	// find defmacros
-	jqScript.children("defmacro").each(function(n,e){
-		fDefMacro(scope,$(e));
-	});
-
-	// predeclare the _inner so that the element is bound
-	// to the _inner of its own scope
-	scope.defvar("_inner");
-	scope.defvar("_createInner");
 
 	var ffjq = (
 		scopeIn.checkvar(sElement)
 			? scopeIn.get(sElement)
 			: ffjqPassthrough
 	);
+
+	// predeclare the _inner so that the element is bound
+	// to the _inner of its own scope
+	scope.defvar("_inner");
+	scope.defvar("_createInner");
 
 	var fjq = ffjq(scope,jqScript);
 
@@ -244,6 +245,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	each(aAttr, function(sVal, sVar){
 		scope.defvar(sVar, scopeIn.expr(sVal));
 	});
+
 
 	scope._._createInner = function(){
 		return function(scope){

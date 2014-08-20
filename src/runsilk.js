@@ -6,6 +6,8 @@ var nsSilk = require("./nsSilk.js");
 var fCreateDom = require("jsdom").env;
 var nsFs = require('fs');
 var nsProcess = process;
+var nsSilk = require("./nsSilk.js");
+var Scope = require("./LiveObject");
 
 var sfl = nsProcess.argv[2] || "../examples/test-repeat.silk";
 var shtml = nsFs.readFileSync(sfl).toString();
@@ -21,7 +23,9 @@ fCreateDom(
 
 		$("<!-- -->" + shtml+"<!-- -->").appendTo("page");
 
-		var jq = nsSilk.fjqSilkify($("page"));
+		var scope = new Scope();
+		scope.defvar('_page', nsSilk.compile(scope, $('body')));
+		var jq = scope.get("_page");
 
 		console.log(jq.html().replace(/^[\n\s]*$/gmi,''));
 	}
