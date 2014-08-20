@@ -38,16 +38,28 @@ var faAttributes = function(jq){
 	return a;
 };
 
-// ---------------------------------------------------------------------------
-var ffjqPassthrough = function(scope){
-	return function(){
-		var _ = scope._;
-		var jq = $("<" + _._element + ">");
-		each(scope._attributes, function(sVal, sVar){
-			jq.attr(sVar,_[sVar]);
-		});
-		jq.append(_._inner.clone());
 
+// this tricky bit makes sure we don't remove/detach
+// node which we still need. detach and reattach
+// loses focus. remove wipes handlers
+var fSafeSwapContents = function(jq, jqNewContents){
+	jq.append(jqNewContents);
+
+	var veNew = jqNewContents.get();
+	var jqOld = jq.contents();
+	var veOld = jqOld.get();
+
+	for (var nOld=0, cOld=veOld.length; nOld<cOld; nOld++){
+		if (veNew.indexOf(veOld[nOld]) === -1){
+			$(veOld[nOld]).remove();
+		}
+	}
+};
+
+// ---------------------------------------------------------------------------
+var ffjqPassthrough = function(scope,jq){
+	return function(){
+		fSafeSwapContents(jq, scope._._inner);
 		return jq;
 	}
 };
@@ -179,18 +191,23 @@ var ffjqEvalText = function(scope,jqScript){
 
 // ---------------------------------------------------------------------------
 var ffjqEvalElements = function(scope, jq){
-	var vf = [];
-	each(jq.get(),function(e){
-		vf.push(ffjqEvalElement(scope, $(e)));
+
+	var scopeInner = new Scope(scope.sName+":INNER");
+
+	each(jq.get(),function(e,n){
+		scopeInner.defvar(n,ffjqEvalElement(scope, $(e)));
 	});
+
+	var c=jq.length;
 
 	return function(){
 		var jqInner=$();
-		each(vf, function(f,n){
-			jqInner = jqInner.add(f(scope));
-		});
+		for (var n=0; n<c; n++){
+			jqInner = jqInner.add(scopeInner.get(n));
+		}
 		return jqInner;
 	};
+
 };
 
 var compile = ffjqEvalElements;
@@ -206,7 +223,10 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	}
 
 	// defelt
-	if (sElement === "script" && jqScript.attr("type") === "defelt"){
+	if (
+		sElement === "defelt" 
+			|| (sElement === "script" && jqScript.attr("type") === "defelt")
+	){
 		// find defelt
 		fDefElement(scopeIn,jqScript );
 		return function(){return $();};
@@ -214,7 +234,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
  
 	// defmacro
 	if (sElement === "defmacro"){
-		fDefMacro(scope,jqScript);
+		fDefMacro(scopeIn,jqScript);
 		return function(){return $();};
 	}
 
@@ -224,7 +244,9 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	}
 
 	// elements
-	var scope = scopeIn.fscopeClone(scopeIn.sName + "." + sElement);
+	var scope = scopeIn.fscopeClone(
+		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000)
+	);
 
 	var ffjq = (
 		scopeIn.checkvar(sElement)
@@ -234,6 +256,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	// predeclare the _inner so that the element is bound
 	// to the _inner of its own scope
+
 	scope.defvar("_inner");
 	scope.defvar("_createInner");
 
@@ -246,13 +269,11 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		scope.defvar(sVar, scopeIn.expr(sVal));
 	});
 
-
 	scope._._createInner = function(){
 		return function(scope){
 			return ffjqEvalElements(scope,jqScript.contents());
 		}
 	};
-
 
 	// quick alias for _._createInner(_);
 	scope._._inner = ffjqEvalElements(scope, jqScript.contents());
@@ -286,6 +307,7 @@ nsSilk.digest = function(scope, sVar, cIterations){
 
 // ---------------------------------------------------------------------------
 nsSilk.compile = ffjqEvalElements;
+nsSilk.fSafeSwapContents = fSafeSwapContents;
 
 // ---------------------------------------------------------------------------
 nsSilk.fjqSilkify = function(jqIn, scope, cIterations){

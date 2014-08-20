@@ -1,4 +1,8 @@
-var D=console.log;
+// ---------------------------------------------------------------------------
+var D = function(){
+  Function.apply.call(console.log, console, arguments);
+};
+
 var each = require("./each");
 var LiveValue = require("./LiveValue");
 var ffBind = require("./ffBind");
@@ -20,6 +24,12 @@ LiveObject.prototype.getParent = function(){
 	return this.loParent;
 }
 
+Object.defineProperty(
+	LiveObject.prototype,"parent", {
+		get: function(){return this.loParent;}
+	}
+);
+
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fvslv = function(){
 	var setVar = {};
@@ -39,6 +49,17 @@ LiveObject.prototype.fvslv = function(){
 
 	return vs;
 }
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.faSimple = function(){
+	var vslv = this.fvslv();
+	var a={};
+	var lo = this;
+	vslv.forEach(function(slv){
+		a[slv] = lo.get(slv);
+	});
+	return a;
+};
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDirty = function(){	
@@ -86,11 +107,29 @@ LiveObject.prototype.fRemakeAccessLayer = function(){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.defvar = function(s,x){
+/*
 	var bNew = !this.checkvar(s);
-	this.alv[s] = new LiveValue(this.sName + ":" + s, x);
 
 	if (bNew){
+		this.alv[s] = new LiveValue(this.sName + ":" + s, x);
 		this.fRemakeAccessLayer();
+	}
+	else{
+		this.set(s,x);
+	}
+*/
+
+	var bExistsLocal = this.localvar(s);
+
+	if (!bExistsLocal){
+		var bExists = this.checkvar(s);
+		this.alv[s] = new LiveValue(this.sName + ":" + s, x);
+		if (!bExists){
+			this.fRemakeAccessLayer();
+		}
+	}
+	else{
+		this.set(s,x);
 	}
 };
 

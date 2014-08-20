@@ -1,0 +1,28 @@
+
+<!-- include --> 
+<defelt name="include">
+	defvar("_shtmlLoaded");
+	defvar("_bLoaded", false);
+
+	return function(){
+		var _ = scope._;
+
+		if (!_._bLoaded){
+			$.ajax({
+				url: _.file,
+				success: function(sData, sStatus){
+					console.log("loaded...");
+					_._shtmlLoaded = compile(scope,$("<div>" + sData + "</div>"))();
+					_._bLoaded = true;
+					Silk.digest();
+				}
+			});
+		}
+		return _._bLoaded ? _._shtmlLoaded : _._inner;
+	};
+</defelt>
+
+
+<include file="'sample.silk'">
+	loading...
+</include>

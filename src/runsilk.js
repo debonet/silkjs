@@ -23,7 +23,7 @@ fCreateDom(
 
 		$("<!-- -->" + shtml+"<!-- -->").appendTo("page");
 
-		var scope = new Scope();
+		var scope = new Scope("global");
 		scope.defvar('_page', nsSilk.compile(scope, $('body')));
 		var jq = scope.get("_page");
 

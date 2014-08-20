@@ -1,4 +1,7 @@
-var D=console.log;
+// ---------------------------------------------------------------------------
+var D = function(){
+  Function.apply.call(console.log, console, arguments);
+};
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
@@ -32,7 +35,9 @@ LiveValue.prototype.fDirty = function(){
 	if (!this.bDirty){
 //		D("MARKING DIRTY", this.sName, this.vlvListeners.length);
 		// so tell listensers
+		var lv = this;
 		this.vlvListeners.forEach(function(lvListener){
+//			D("MARKING DIRTY", lv.sName, "--->",lvListener.sName);
 			lvListener.fDirty();
 		});
 
@@ -76,7 +81,7 @@ LiveValue.prototype.fxGet = function(){
 			this._xCached = this._x();
 			klvListeners.pop();
 			kvlvDependsCache.pop();
-	
+
 			// mark all new dependencies
 			vlvDependsNew.forEach(function(vlDep){vlDep.nMark = 1;});
 
