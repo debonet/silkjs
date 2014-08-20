@@ -14,7 +14,7 @@ What can silk do for me?
 
 How about this!
 
-~~~
+~~~html
 
 <defmacro name="studentrow" student="'some body'" grade="'n/a'">
 	<tr>
@@ -37,7 +37,7 @@ How about this!
 yields:
 
 
-~~~
+~~~html
 
 <table>
 	<tr>
@@ -67,7 +67,7 @@ Ok, that's neat, but where's the power?
 
 How about this instead:
 
-~~~
+~~~html
 
 <defmacro 
 	 name="describefamily" 
@@ -107,7 +107,7 @@ They are constructs that can easily and trivially be written within Silk itself!
 
 
 
-~~~
+~~~html
 
 <!-- if element -->
 <defelt name="if" test="false">
@@ -124,7 +124,7 @@ They are constructs that can easily and trivially be written within Silk itself!
 
 
 
-~~~
+~~~js
 
 <!-- foreach element -->
 <defelt scope="_" name="foreach" items="[]" as="'_item'" indexby="'_index'">
@@ -169,4 +169,54 @@ They are constructs that can easily and trivially be written within Silk itself!
 
 
 
+
+
+
+What about realtime DOM manipulation?
+-------------------------------------
+
+Uh huh. Sure! Take a look at this:
+
+~~~js
+<defelt name="watch">
+	return function(){
+		var _ = scope._;
+		var jq = _._inner;
+
+		// safely bind the event using standard jQuery
+		jq.on("input", function(){
+			scope.parent.set(_.var, $(this).val());
+
+			// make sure we look for a change
+			Silk.digest();
+			jq.focus();
+		});
+		return jq;
+	};
+</defelt>
+
+
+<div yourinput="'no input yet....'">
+	<watch var="'yourinput'">
+		<input>
+	</watch>
+	Your input is: {{_.yourinput}}
+</div>
+
+~~~
+
+
+
+
+
+This looks awesome. How can I get involved?
+-------------------------------------------
+
+Just drop us a line. There's tons to do. In particular things we're looking for:
+
+* documentation
+* unit test / testing
+* standard library developers
+* beta developers
+* complaints /suggestions
 
