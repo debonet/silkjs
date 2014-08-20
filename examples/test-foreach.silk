@@ -1,33 +1,34 @@
 <!-- foreach element -->
-<defelt scope="_" name="foreach" items="[]">
+<defelt scope="_" name="foreach" items="[]" as="'_item'" indexby="'_index'">
 	var ascope = {};
-	var alv = {};
+	var scopeInner = new Scope();
 
 	return function(){
 		var jqOut = $();
 
 		var a=_.items;
 
-		// delete exess
+		// delete exess, if changed 
 		each(ascope,function(scope,s){
 			if (!(s in a)){
 				delete ascope[s];
-				delete alv[s];
+				scopeInner.del(s);
 			}
 		});
 
+		// create new, if needed
 		each(a,function(x,s){
 			if (!(s in ascope)){
 				ascope[s] = scope.clone();
-				ascope[s].defvar("_item",scope.expr("_.items['" + s + "']"));
-				ascope[s].defvar("_index",s);
-				alv[s] = new LiveValue("x",_._createInner(ascope[s]));
+				ascope[s].defvar(_[_.as],scope.expr("_.items['" + s + "']"));
+				ascope[s].defvar(_[_.indexby],s);
+				scopeInner.defvar(s,_._createInner(ascope[s]));
 			}
 		});
 
 		// eval and add
 		each(a,function(x,s){
-			jqOut = jqOut.add(alv[s].fxGet());
+			jqOut = jqOut.add(scopeInner._[s]);
 		});
 		return jqOut;
 	};
