@@ -21,7 +21,8 @@ fCreateDom(
 		shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
 		shtml = shtml.replace(/<\/defelt>/g,"</script>");
 
-		$("<!-- -->" + shtml+"<!-- -->").appendTo("page");
+
+		$($.parseHTML(shtml,window.document,true)).appendTo("page");
 
 		var scope = new Scope("global");
 		scope.defvar('_page', nsSilk.compile(scope, $('body')));

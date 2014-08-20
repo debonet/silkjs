@@ -7,8 +7,23 @@ var ffBind = require("./ffBind");
 
 // ---------------------------------------------------------------------------
 var D = function(){
-  Function.apply.call(console.log, console, arguments);
+	var vxArg = Array.prototype.slice.call(arguments);
+
+	each(vxArg, function(xArg,n){
+		if (typeof(xArg) === 'object' && xArg instanceof $){
+//			vxArg[n] = $("<div />").append(xArg.clone()).html();
+			var jq = xArg;
+			var s="";
+			jq.each(function(ne,e){
+				s+=ne + "]" + $("<div />").append($(e).clone()).html() + "\n";
+			});
+			vxArg[n] = s;
+		}
+	});
+
+  Function.apply.call(console.log, console, vxArg);
 };
+
 
 
 // ---------------------------------------------------------------------------
@@ -185,9 +200,11 @@ var ffjqEvalText = function(scope,jqScript){
 
 		var s=vs.join('');
 		s=s.replace(/\\\n/g,"");
+		s=s.replace(/\\\t+/g,"");
 		return $("<div>").text(s).contents();
 	}
 };
+
 
 // ---------------------------------------------------------------------------
 var ffjqEvalElements = function(scope, jq){
@@ -201,14 +218,16 @@ var ffjqEvalElements = function(scope, jq){
 	var c=jq.length;
 
 	return function(){
-		var jqInner=$();
+    var vjq=[];
 		for (var n=0; n<c; n++){
-			jqInner = jqInner.add(scopeInner.get(n));
+      vjq = vjq.concat(scopeInner.get(n).get());
 		}
-		return jqInner;
+		return $(vjq);
 	};
 
 };
+
+
 
 var compile = ffjqEvalElements;
 
@@ -228,7 +247,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 			|| (sElement === "script" && jqScript.attr("type") === "defelt")
 	){
 		// find defelt
-		fDefElement(scopeIn,jqScript );
+		fDefElement(scopeIn,jqScript);
 		return function(){return $();};
 	}
  
@@ -240,7 +259,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	// text
 	if (nNodeType === 3){
-		return  ffjqEvalText(scopeIn, jqScript);
+		return ffjqEvalText(scopeIn, jqScript);
 	}
 
 	// elements

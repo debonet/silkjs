@@ -20,30 +20,31 @@
 		each(a,function(x,s){
 			if (!(s in ascope)){
 				ascope[s] = scope.clone();
-				ascope[s].defvar(_[_.as],scope.expr("_.items['" + s + "']"));
-				ascope[s].defvar(_[_.indexby],s);
-				scopeInner.defvar(s,_._createInner(ascope[s]));
+				ascope[s].defvar(_.as, scope.expr("_.items['" + s + "']"));
+				ascope[s].defvar(_.indexby,s);
+				scopeInner.defvar(s,compile(ascope[s],jq.contents().clone()));
 			}
 		});
 
 		// eval and add
+		var vjq = [];
 		each(a,function(x,s){
-			jqOut = jqOut.add(scopeInner._[s]);
+				vjq = vjq.concat(scopeInner._[s].get());
 		});
-		return jqOut;
+		return $(vjq);
 	};
 </defelt>
 
-<a x="['a','b','c']">\
-	<foreach items="_.x">
-		item {{_._index}} is {{_._item}}\
-	</foreach>
+<a x="['a','b','c']">
+\	<foreach items="_.x">\
+		item {{_._index}} is {{_._item}}
+\	</foreach>\
 </a>
 
-<a x="{'a':11,'b':22,'c':33}">\
-	<foreach items="_.x">
-		item {{_._index}} is {{_._item}}\
-	</foreach>
+<a x="{'a':11,'b':22,'c':33}">
+\	<foreach items="_.x">\
+		item {{_._index}} is {{_._item}}
+\	</foreach>\
 </a>
 
 

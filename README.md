@@ -148,21 +148,20 @@ They are constructs that can easily and trivially be written within Silk itself!
 		each(a,function(x,s){
 			if (!(s in ascope)){
 				ascope[s] = scope.clone();
-				ascope[s].defvar(_[_.as],scope.expr("_.items['" + s + "']"));
-				ascope[s].defvar(_[_.indexby],s);
-				scopeInner.defvar(s,_._createInner(ascope[s]));
+				ascope[s].defvar(_.as, scope.expr("_.items['" + s + "']"));
+				ascope[s].defvar(_.indexby,s);
+				scopeInner.defvar(s,compile(ascope[s],jq.contents().clone()));
 			}
 		});
 
 		// eval and add
+		var vjq = [];
 		each(a,function(x,s){
-			jqOut = jqOut.add(scopeInner._[s]);
+				vjq = vjq.concat(scopeInner._[s].get());
 		});
-		return jqOut;
+		return $(vjq);
 	};
 </defelt>
-
-
 ~~~
 
 
