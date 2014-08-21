@@ -223,10 +223,13 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 				ve = ve.concat(x.clone().get());
 			}
 			else{
-				x=x||"";
+				x=x+"";
 				x=x.replace(/\\\n/g,"");
 				x=x.replace(/\\\t+/g,"");
-				ve = ve.concat($.parseHTML(x));
+				// for some reason $.parseHTML does not like ""
+				if (x.length){
+					ve = ve.concat($.parseHTML(x));
+				}
 			}
 		});
 

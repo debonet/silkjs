@@ -107,17 +107,6 @@ LiveObject.prototype.fRemakeAccessLayer = function(){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.defvar = function(s,x){
-/*
-	var bNew = !this.checkvar(s);
-
-	if (bNew){
-		this.alv[s] = new LiveValue(this.sName + ":" + s, x);
-		this.fRemakeAccessLayer();
-	}
-	else{
-		this.set(s,x);
-	}
-*/
 
 	var bExistsLocal = this.localvar(s);
 
