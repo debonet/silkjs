@@ -5,64 +5,37 @@
 </head>
 <body>
 
-<defmacro name="nn2" x=7>
-	A{{_.x}}B
-</defmacro>
 
-<defelt name="nn" x=7>
+
+<defelt name="input" store="val">
 	return function(){
-	return $("<div>A</div>")
-	.append(_.x)
-	.append($("<div>B</div>").contents())
-	.contents();
+		var jq=$("<input>", _._attributes).append(_._inner);
+
+		jq.on("input", function(){
+	    D("every time!");
+			scope.parent.set(_.store, $(this).val());
+			Silk.digest();
+			jq.focus();
+		});
+		D("watch once!");
+		return jq;
 	};
+
 </defelt>
 
-<m p=3 x=5>
-	 <n x="c{{_.x}}d">
- 		 X{{_.x}}Y
-		 <nn2 x="e{{_.x}}f" />
-	</n>
-</m>
+<defelt name="let">
+	return function(){
+		return _._inner;
+	}
+</defelt>
 
 
-<m p=3 x=5>
-	 <n x="c{{_.x}}d">
- 		 X{{_.x}}Y
-		 <nn2 x="e{{_.x}}f" />
-	</n>
-</m>
+<let val="nothing typed yet" prompt="Type something bozo!">
+	<input placeholder="{{_.prompt}}">
+	<br />
+	You typed: {{_.val}}
+</let>
 
-
-<m p=3 x=5>
-	 <n x="c{{_.x}}d">
- 		 X{{_.x}}Y
-		 <nn x="e{{_.x}}f" />
-	</n>
-</m>
-
-
-
-
-<m p=3 x=5>
-	 <n x="c{{_.x}}d">
- 		 X{{_.x}}Y
-		 <nn x="e{{_.x}}f" />
-	</n>
-</m>
-
-
-
-
-<!--
-<defmacro name="nn2" x="7">
-	A{{_.x}}B
-</defmacro>
-
-<l x="2">
-<nn x="{{_.x}}" />
-</l>
--->
 
 </body>
 </html>

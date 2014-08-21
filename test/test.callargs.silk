@@ -1,0 +1,59 @@
+
+<defmacro name="nn2" x=7>
+	A{{_.x}}B
+</defmacro>
+
+<defelt name="nn" x=7>
+	return function(){
+	return $("<div>A</div>")
+	.append(_.x)
+	.append($("<div>B</div>").contents())
+	.contents();
+	};
+</defelt>
+
+<m p=3 x=5>
+	 <n x="c{{_.x}}d">
+ 		 X{{_.x}}Y
+		 <nn2 x="e{{_.x}}f" />
+	</n>
+</m>
+
+
+<m p=3 x=5>
+	 <n x="c{{_.x}}d">
+ 		 X{{_.x}}Y
+		 <nn2 x="e{{_.x}}f" />
+	</n>
+</m>
+
+
+<m p=3 x=5>
+	 <n x="c{{_.x}}d">
+ 		 X{{_.x}}Y
+		 <nn x="e{{_.x}}f" />
+	</n>
+</m>
+
+
+
+
+<m p=3 x=5>
+	 <n x="c{{_.x}}d">
+ 		 X{{_.x}}Y
+		 <nn x="e{{_.x}}f" />
+	</n>
+</m>
+
+
+
+
+<!--
+<defmacro name="nn2" x="7">
+	A{{_.x}}B
+</defmacro>
+
+<l x="2">
+<nn x="{{_.x}}" />
+</l>
+-->

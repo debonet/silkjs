@@ -1,0 +1,22 @@
+
+<defelt name="localelt">
+	return function(){
+		return $("<div>As defined globally</div>");
+	}
+</defelt>
+
+<localelt />
+
+
+<a>
+	<defelt name="localelt">
+	return function(){
+		return $("<div>As defined locally</div>");
+	}
+	</defelt>
+
+	<localelt />
+</a>
+
+
+<localelt />

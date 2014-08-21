@@ -1,10 +1,10 @@
 "use strict";
 
 var each = require("./each");
-var Scope = require("./LiveObject");
-var LiveValue = require("./LiveValue");
 var ffBind = require("./ffBind");
+var Scope = require("./Scope");
 
+									 
 // ---------------------------------------------------------------------------
 var D = function(){
 	var vxArg = Array.prototype.slice.call(arguments);
@@ -92,17 +92,18 @@ var fsUnescape = function(s){
 };
 
 
+var fsf
+
+
+
+
 // ---------------------------------------------------------------------------
 var fDefElement = function(scope,jq){
 	var sBody = jq.html();
 
 	var aAttr = faAttributes(jq);
 	var sName = aAttr["name"];
-	var sScope = "scope";
-	var sQuery = "jq";
 	delete aAttr["name"];
-	delete aAttr["scope"];
-	delete aAttr["query"];
 
 	
 	var afClosure = {};
@@ -115,14 +116,14 @@ var fDefElement = function(scope,jq){
 	sBody = fsUnescape(sBody);
 
 	var sf=(
-		"(function(" + sScope + "," + sQuery + "){\n"
-			+ "var defvar     = ffBind(" + sScope + ", 'defvar');\n"
-			+ "var defmutable = ffBind(" + sScope + ", 'defmutable');\n"
-			+ "var delvar     = ffBind(" + sScope + ", 'delvar');\n"
-			+ "var checkvar   = ffBind(" + sScope + ", 'checkvar');\n"
-			+ "var _          = " + sScope + "._;\n"
-			+ sBody 
-			+"\n})"
+		"(function(scope,jq,jqDefinition){\n"
+			+ "var defvar     = ffBind(scope, 'defvar');\n"
+			+ "var defmutable = ffBind(scope, 'defmutable');\n"
+			+ "var delvar     = ffBind(scope, 'delvar');\n"
+			+ "var checkvar   = ffBind(scope, 'checkvar');\n"
+			+ "var _          = scope._;\n"
+			+ sBody  + "\n"
+			+"})"
 	);
 
 	// using this eval trick gives us a closure over $ 
@@ -132,7 +133,7 @@ var fDefElement = function(scope,jq){
 	scope.defvar(
 		sName,
 		function(){
-			return function(scopeIn,jqIn){
+			return function(scopeIn,jqIn,jq){
 				// arguments
 				each(afClosure, function(fClosure, sVar){
 					scopeIn.defvar(sVar, fClosure);
@@ -257,7 +258,7 @@ var ffjqEvalElements = function(scope, jq){
 	return function(){
     var ve=[];
 		for (var n=0; n<c; n++){
-      ve = ve.concat(scopeInner.get(n).get());
+      ve = ve.concat(scopeInner.getvar(n).get());
 		}
 		return $(ve);
 	};
@@ -300,14 +301,14 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	}
 
 	// elements
-	var scope = scopeIn.fscopeClone(
-		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000)
+	var scope = new Scope(
+		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000),
+		scopeIn
 	);
-
 
 	var ffjq = (
 		scopeIn.checkvar(sElement)
-			? scopeIn.get(sElement)
+			? scopeIn.getvar(sElement)
 			: ffjqPassthrough
 	);
 
@@ -321,10 +322,11 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	var aAttr = faAttributes(jqScript);
 	scope.defvar("_element",sElement);
-	scope.defvar("_attributes",aAttr);
 	each(aAttr, function(sVal, sVar){
-		scope.defvar(sVar, ffxInterpolateString(scopeIn,sVal));
+		aAttr[sVar] =  ffxInterpolateString(scopeIn,sVal);
+		scope.defvar(sVar, aAttr[sVar]);
 	});
+	scope.defvar("_attributes",aAttr);
 
 	scope._._createInner = function(){
 		return function(scope){
@@ -349,13 +351,13 @@ nsSilk.digest = function(scope, sVar, cIterations){
 
 	var x;
 	for (var n=0; n<cIterations; n++){
-		x = scope.get(sVar);
-		if (!scope.fbIsDirty(sVar)){
+		x = scope.getvar(sVar);
+		if (!scope.dirtyvar(sVar)){
 			break;
 		}
 		D("iterating..." + n + "/" + cIterations);
 	}	
-	if (scope.fbIsDirty(sVar)){
+	if (scope.dirtyvar(sVar)){
 		console.warn("Reached " + cIterations + " giving up...");
 	}
 
