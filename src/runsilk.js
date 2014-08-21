@@ -14,15 +14,9 @@ var shtml = nsFs.readFileSync(sfl).toString();
 
 
 fCreateDom(
-	"<page />",
+	shtml,
 	function(err, window){
 		$ = require('jquery')(window);
-
-		shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
-		shtml = shtml.replace(/<\/defelt>/g,"</script>");
-
-
-		$($.parseHTML(shtml,window.document,true)).appendTo("page");
 
 		var scope = new Scope("global");
 		scope.defvar('_page', nsSilk.compile(scope, $('body')));

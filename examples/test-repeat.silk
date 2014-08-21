@@ -1,5 +1,5 @@
 <!-- repeat element -->
-<defelt name="repeat" times="0" indexby="'_index'">
+<defelt name="repeat" times="0" indexby="_index">
 	var vscope = [];
 	var scopeInner = new Scope();
 
@@ -23,11 +23,11 @@
 		}
 
 		// eval and add
-		var vjq = [];
+		var ve = [];
 		for (n=0; n<c; n++){
-				vjq = vjq.concat(scopeInner._[n].get());
+				ve = ve.concat(scopeInner._[n].get());
 		}
-		return $(vjq);
+		return $(ve);
 	};
 
 </defelt>
@@ -43,9 +43,9 @@ See Simple Repeat 3 times
 
 outer loop from 0 to 2, inner loop from 0 to outer_index+3 
 -------------------------
-<repeat times="3" indexby="'a'">\
+<repeat times="3" indexby="a">\
 	OUTER {{_.a}}
-\	<repeat times="_.a+3" indexby="'b'">\
+\	<repeat times="{{_.a+3}}" indexby="b">\
 		 OUTER {{_.a}} INNER {{_.b}}
 \	</repeat>\
 </repeat>\

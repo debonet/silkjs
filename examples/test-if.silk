@@ -1,5 +1,5 @@
 <!-- if element -->
-<defelt name="if" test="false">
+<defelt name="if" test="{{false}}">
 	return function(){
 		if (_.test){
 			return _._inner;
@@ -11,11 +11,11 @@
 
 you sould see "show this" below here
 ------------------------------------
-<if test="false">\
+<if test="{{false}}">\
 	dont show this
 </if>
 
-<if test="true">\
+<if test="{{true}}">\
 	show this
 </if>
 
@@ -34,7 +34,7 @@ you sould see "show this" below here
 
 
 
-<defelt name="case" test="true">
+<defelt name="case" test="{{true}}">
 	return function(){
 		if (!_.switchflag && _.test){
 			_.switchflag = true;
@@ -46,20 +46,29 @@ you sould see "show this" below here
 
 
 
+you sould see "C do show" below here
+------------------------------------
+<switch>\
+	<case test="{{false}}">A dont show</case>
+	<case test="{{false}}">B dont show</case>
+	<case test="{{true}}">C do show</case>
+	<case test="{{false}}">D dont show</case>
+</switch>\
+
+
 you sould see "BB do show" below here
 ------------------------------------
-
 <switch>
-	<case test="false">A dont show</case>
-	<case test="false">B donw show</case>
-	<case test="true">
+	<case test="{{false}}">A dont show</case>
+	<case test="{{false}}">B donw show</case>
+	<case test="{{true}}">
 		<switch>
-			<case test="false">AA dont show</case>
-			<case test="true" >BB do show</case>
-			<case test="false">CC dont show</case>
-			<case test="true" >DD dont show</case>
+	\		<case test="{{false}}">AA dont show</case>
+	\		<case test="{{true}}" >BB do show</case>
+	\		<case test="{{false}}">CC dont show</case>
+	\		<case test="{{true}}" >DD dont show</case>
 		</switch>
 	</case>
-	<case test="false">D</case>
+	<case test="{{false}}">D</case>
 </switch>
 

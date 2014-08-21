@@ -5,59 +5,45 @@
 </head>
 <body>
 
+<defmacro name="nn2" x=7>
+	A{{_.x}}B
+</defmacro>
 
-
-<defelt name="watch">
+<defelt name="nn" x=7>
 	return function(){
-		var _ = scope._;
-		var jq = _._inner;
-		jq.on("input", function(){
-	    D("every time!");
-			scope.parent.set(_.var, $(this).val());
-			Silk.digest();
-			jq.focus();
-		});
-		D("watch once!");
-		return jq;
+	return $("<div>A</div>")
+	.append(_.x)
+	.append($("<div>B</div>").contents())
+	.contents();
 	};
 </defelt>
 
-<defelt name="watch2">
-	return function(){
-		D("watch2 once");
-		return jq;
-	};
-</defelt>
+<m p=3 x=5>
+	 <n x="c{{_.x}}d">
+ 		 X{{_.x}}Y
+		 <nn2 x="e{{_.x}}f" />
+	</n>
+</m>
 
-<b xxx="1">
-	<watch var="'xxx'">
-		<textarea>YOOOOOO </textarea>
-	</watch>
-	<watch2></watch2>
-	{{_.xxx}}
-</b>
+
+<m p=3 x=5>
+	 <n x="c{{_.x}}d">
+ 		 X{{_.x}}Y
+		 <nn2 x="e{{_.x}}f" />
+	</n>
+</m>
+
+
+
 
 <!--
+<defmacro name="nn2" x="7">
+	A{{_.x}}B
+</defmacro>
 
-<defelt name="foo">
-	return function(){
-		var jq = _._inner;
-		jq.attr("fish","balls");
-		jq.on("input", function(){
-			alert("yeah!");
-		});
-
-		return jq;
-	}
-</defelt>
-
-<c>
-<a var="'xxx'">
-<foo>
-	<input value="fuuugg">
-</foo>
-</a>
-</c>
+<l x="2">
+<nn x="{{_.x}}" />
+</l>
 -->
 
 </body>

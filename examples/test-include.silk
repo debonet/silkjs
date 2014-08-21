@@ -12,7 +12,7 @@
 				url: _.file,
 				success: function(sData, sStatus){
 					console.log("loaded...");
-					_._shtmlLoaded = compile(scope,$("<div>" + sData + "</div>"))();
+					_._shtmlLoaded = compile(scope,$($.parseHTML(sData))());
 					_._bLoaded = true;
 					Silk.digest();
 				}
@@ -23,6 +23,6 @@
 </defelt>
 
 
-<include file="'sample.silk'">
+<include file="sample.silk">
 	loading...
 </include>

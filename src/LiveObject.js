@@ -214,14 +214,17 @@ LiveObject.prototype.expr = function(x){
 	var sLiveObject = sLiveObject || "_";
 	var lo = this;
 	var sScope = "lo";
+
 	return eval(
 		""
 			+ "var defvar     = ffBind(" + sScope + ", 'defvar');\n"
 			+ "var defmutable = ffBind(" + sScope + ", 'defmutable');\n"
 			+ "var delvar     = ffBind(" + sScope + ", 'delvar');\n"
 			+ "var checkvar   = ffBind(" + sScope + ", 'checkvar');\n"
-			+ "var _          = " + sScope + "._;\n"
-			+ "(function(){return " + x + "})"
+			+ "(function(){"
+			+ "  var _ = " + sScope + "._;\n"
+			+ "  return " + x 
+			+ " })"
 	);
 };
 

@@ -1,5 +1,5 @@
 <!-- foreach element -->
-<defelt scope="_" name="foreach" items="[]" as="'_item'" indexby="'_index'">
+<defelt scope="_" name="foreach" items="[]" as="_item" indexby="_index">
 	var ascope = {};
 	var scopeInner = new Scope();
 
@@ -27,22 +27,22 @@
 		});
 
 		// eval and add
-		var vjq = [];
+		var ve = [];
 		each(a,function(x,s){
-				vjq = vjq.concat(scopeInner._[s].get());
+				ve = ve.concat(scopeInner._[s].get());
 		});
-		return $(vjq);
+		return $(ve);
 	};
 </defelt>
 
-<a x="['a','b','c']">
-\	<foreach items="_.x">\
+<a x="{{ ['a','b','c'] }}">
+\	<foreach items="{{_.x}}">\
 		item {{_._index}} is {{_._item}}
 \	</foreach>\
 </a>
 
-<a x="{'a':11,'b':22,'c':33}">
-\	<foreach items="_.x">\
+<a x="{{ {'a':11,'b':22,'c':33} }}">
+\	<foreach items="{{_.x}}">\
 		item {{_._index}} is {{_._item}}
 \	</foreach>\
 </a>

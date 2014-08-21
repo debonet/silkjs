@@ -11,12 +11,12 @@ var D = function(){
 
 	each(vxArg, function(xArg,n){
 		if (typeof(xArg) === 'object' && xArg instanceof $){
-//			vxArg[n] = $("<div />").append(xArg.clone()).html();
 			var jq = xArg;
-			var s="";
+			var s="jquery [";
 			jq.each(function(ne,e){
-				s+=ne + "]" + $("<div />").append($(e).clone()).html() + "\n";
+				s+="\n\t" + ne + " -> " + $("<div />").append($(e).clone()).html();
 			});
+			s+= "]";
 			vxArg[n] = s;
 		}
 	});
@@ -108,14 +108,13 @@ var fDefElement = function(scope,jq){
 	var afClosure = {};
 	each(aAttr, function(sVal, sVar){
 		// we allow the argument to be an expression
-		afClosure[sVar]=scope.expr(sVal);
+		afClosure[sVar]=ffxInterpolateString(scope,sVal);//scope.expr(sVal);
 	});
 
 
 	sBody = fsUnescape(sBody);
 
-	// using this eval trick gives us a closure over $ 
-	var f=eval(
+	var sf=(
 		"(function(" + sScope + "," + sQuery + "){\n"
 			+ "var defvar     = ffBind(" + sScope + ", 'defvar');\n"
 			+ "var defmutable = ffBind(" + sScope + ", 'defmutable');\n"
@@ -125,6 +124,9 @@ var fDefElement = function(scope,jq){
 			+ sBody 
 			+"\n})"
 	);
+
+	// using this eval trick gives us a closure over $ 
+	var f=eval(sf);
 
 
 	scope.defvar(
@@ -146,23 +148,28 @@ var fDefElement = function(scope,jq){
 var fDefMacro = function(scope, jq){
 	var aAttr = faAttributes(jq);
 	var sName = aAttr["name"];
-	var sScope = "scope";
+	var sScopPPe = "scope";
 	var sQuery = "jq";
 	delete aAttr["name"];
 	delete aAttr["scope"];
 	delete aAttr["query"];
 
-	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
+//	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
 	scope.defvar(sName, function(){
 		return function(scopeIn, jqIn){
 			return function(){
+				var aAttrCall = faAttributes(jqIn);
 				each(aAttr, function(sVal, sVar){
-					scopeIn.defvar(sVar, scopeIn.expr(sVal));
+					if (!(sVar in aAttrCall)){
+						scopeIn.defvar(sVar, ffxInterpolateString(scope,sVal));
+					}
 				});
-				each(faAttributes(jqIn), function(sVal, sVar){
-					scopeIn.defvar(sVar, scopeIn.expr(sVal));
+				each(aAttrCall, function(sVal, sVar){
+					scopeIn.defvar(sVar, ffxInterpolateString(scopeIn.parent,sVal));
 				});
-				return compile(scopeIn, jq.contents())();
+				// make sure to clone contents as the macro can be called 
+				// multiple times
+				return compile(scopeIn, jq.contents().clone())();
 			};
 		};
 	});
@@ -170,39 +177,66 @@ var fDefMacro = function(scope, jq){
 };
 
 // ---------------------------------------------------------------------------
-var reExpr = /\{\{(.*?)\}\}/g;
-var ffjqEvalText = function(scope,jqScript){
-	var s=jqScript.text();
-	var re=reExpr;
-
+var reInterpolate = /\{\{([\s\S]*?)\}\}/gm;
+var ffxInterpolateString = function(scope,s,bForceJq){
 	var aMatch;
 	var vx=[];
 	var n = 0;
-
-
-	while(aMatch = re.exec(s)){
+	
+	while(aMatch = reInterpolate.exec(s)){
 		var c = aMatch[0].length;
-		vx.push(s.slice(n,aMatch["index"]));
+		if (aMatch["index"]){
+			vx.push(s.slice(n,aMatch["index"]));
+		}
 		n=aMatch["index"] + c;
 		vx.push(scope.expr(aMatch[1]));
 	};
-	vx.push(s.slice(n));
+	if (n!==c){
+		vx.push(s.slice(n));	
+	}
 
 	return function(){
-		var vs=[];
+		if (vx.length === 1 && !bForceJq){
+			var x=vx[0];
 
+			if (typeof(x) === "function"){
+				x=x();
+			}
+
+			if (x instanceof $){
+				// clone because variables can be used many times
+				return x.clone();
+			}
+			else{
+				return x;
+			}
+		}
+
+		var ve=[];
 		each(vx,function(x){
 			if (typeof(x) === "function"){
-				x=x(scope);
+				var sf=x.toString();
+				x=x();
 			}
-			vs.push(x);
+			if (x instanceof $){
+				// clone because variables can be used many times
+				ve = ve.concat(x.clone().get());
+			}
+			else{
+				x=x||"";
+				x=x.replace(/\\\n/g,"");
+				x=x.replace(/\\\t+/g,"");
+				ve = ve.concat($.parseHTML(x));
+			}
 		});
 
-		var s=vs.join('');
-		s=s.replace(/\\\n/g,"");
-		s=s.replace(/\\\t+/g,"");
-		return $("<div>").text(s).contents();
+		return $(ve);
 	}
+};
+
+// ---------------------------------------------------------------------------
+var ffjqEvalTextElement = function(scope,jqScript){
+	return ffxInterpolateString(scope, jqScript.text(), true);
 };
 
 
@@ -218,11 +252,11 @@ var ffjqEvalElements = function(scope, jq){
 	var c=jq.length;
 
 	return function(){
-    var vjq=[];
+    var ve=[];
 		for (var n=0; n<c; n++){
-      vjq = vjq.concat(scopeInner.get(n).get());
+      ve = ve.concat(scopeInner.get(n).get());
 		}
-		return $(vjq);
+		return $(ve);
 	};
 
 };
@@ -259,13 +293,14 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 
 	// text
 	if (nNodeType === 3){
-		return ffjqEvalText(scopeIn, jqScript);
+		return ffjqEvalTextElement(scopeIn, jqScript);
 	}
 
 	// elements
 	var scope = scopeIn.fscopeClone(
 		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000)
 	);
+
 
 	var ffjq = (
 		scopeIn.checkvar(sElement)
@@ -285,7 +320,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	scope.defvar("_element",sElement);
 	scope.defvar("_attributes",aAttr);
 	each(aAttr, function(sVal, sVar){
-		scope.defvar(sVar, scopeIn.expr(sVal));
+		scope.defvar(sVar, ffxInterpolateString(scopeIn,sVal));
 	});
 
 	scope._._createInner = function(){
