@@ -1,4 +1,5 @@
 
+
 <defelt name="localelt">
 	return function(){
 		return $("<div>As defined globally</div>");
@@ -10,13 +11,14 @@
 
 <a>
 	<defelt name="localelt">
-	return function(){
-		return $("<div>As defined locally</div>");
-	}
+		return function(){
+			return $("<div>As defined locally</div>");
+		}
 	</defelt>
 
-	<localelt />
+	<localelt/>
+
 </a>
 
+<localelt/>
 
-<localelt />

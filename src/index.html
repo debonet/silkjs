@@ -8,16 +8,17 @@
 
 
 <defelt name="input" store="val">
+	var s=_.val;
 	return function(){
-		var jq=$("<input>", _._attributes).append(_._inner);
+//		var jq=$("<input>", _._attributes).append(_._inner);
+	jq.val(s);
+	jq.attr(_._attributes);
 
 		jq.on("input", function(){
-	    D("every time!");
-			scope.parent.set(_.store, $(this).val());
+			scope.parent.setvar(_.store, $(this).val());
 			Silk.digest();
 			jq.focus();
 		});
-		D("watch once!");
 		return jq;
 	};
 
@@ -33,7 +34,7 @@
 <let val="nothing typed yet" prompt="Type something bozo!">
 	<input placeholder="{{_.prompt}}">
 	<br />
-	You typed: {{_.val}}
+	You typed: {{_.val}} 
 </let>
 
 

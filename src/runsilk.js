@@ -14,12 +14,13 @@ var shtml = nsFs.readFileSync(sfl).toString();
 
 
 fCreateDom(
-	shtml,
+	"<page></page>",
 	function(err, window){
 		$ = require('jquery')(window);
+		$('page').append($.parseHTML(shtml));
 
 		var scope = new Scope("global");
-		scope.defvar('_page', nsSilk.compile(scope, $('body')));
+		scope.defvar('_page', nsSilk.compile(scope, $('page')));
 		var jq = scope.getvar("_page");
 
 		console.log(jq.html().replace(/^[\n\s]*$/gmi,''));

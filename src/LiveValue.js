@@ -33,6 +33,9 @@ LiveValue.prototype.fSet = function(x){
 LiveValue.prototype.fDirty = function(){	
 	// if we weren't already dirty we are now 
 	if (!this.bDirty){
+		// mark dirtyness
+		this.bDirty = true;
+
 //		D("MARKING DIRTY", this.sName, this.vlvListeners.length);
 		// so tell listensers
 		var lv = this;
@@ -41,8 +44,6 @@ LiveValue.prototype.fDirty = function(){
 			lvListener.fDirty();
 		});
 
-		// mark dirtyness
-		this.bDirty = true;
 	}
 };
 

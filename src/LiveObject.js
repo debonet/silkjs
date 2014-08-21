@@ -15,6 +15,7 @@ var LiveObject = function(s, loParent){
 	this.alv = {};
 	this.loParent = loParent;
 	this.vloChildren = [];
+	this.vlvListeners = [];
 
 	if(loParent){
 		loParent.vloChildren.push(this);
@@ -32,7 +33,23 @@ LiveObject.prototype.floClone = function(s){
 };
 
 
-
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fDirty = function(){   
+    this.vlvListeners.forEach(function(lvListener){
+        lvListener.fDirty();
+    });
+};
+ 
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fRemoveListener = function(lv){
+    this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
+};
+ 
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fAddListener = function(lv){
+    this.vlvListeners.push(lv);
+};
+ 
 // ---------------------------------------------------------------------------
 Object.defineProperty(
 	LiveObject.prototype,"parent", {
@@ -66,7 +83,7 @@ LiveObject.prototype.faSimple = function(){
 	var a={};
 	var lo = this;
 	vslv.forEach(function(slv){
-		a[slv] = lo.get(slv);
+		a[slv] = lo.fxGet(slv);
 	});
 	return a;
 };

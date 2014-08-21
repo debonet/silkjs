@@ -1,7 +1,7 @@
 "use strict";
 
 var nsSilk = require("./nsSilk.js");
-var Scope = require("./LiveObject");
+var Scope = require("./Scope");
 
 window.Silk = {
 

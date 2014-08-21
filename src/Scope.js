@@ -6,6 +6,8 @@ var LiveObject = require("./LiveObject");
 
 var Scope = function(s, scopeParent){
 	this.sName=s;
+	this.scopeParent = scopeParent;
+
 	scopeParent = scopeParent || {};
 	this.loVariables  = new LiveObject(s + "(vars)", scopeParent.loVariables);
 	this.loElements   = new LiveObject(s + "(elt)", scopeParent.loElements);
@@ -18,6 +20,12 @@ Object.defineProperty(
 	}
 );
 
+Object.defineProperty(
+	Scope.prototype,"parent", {
+		get: function(){return this.scopeParent;}
+	}
+);
+
 // variable methods
 Scope.prototype.defvar = function(s,x){
 	return this.loVariables.fDefine(s,x);
@@ -27,8 +35,8 @@ Scope.prototype.defmutable = function(s,x){
 	return this.loVariables.fDefineMutable(s,x);
 };
 
-Scope.prototype.checkvar = function(s,x){
-	return this.loVariables.fbExists(s,x);
+Scope.prototype.checkvar = function(s){
+	return this.loVariables.fbExists(s);
 };
 
 Scope.prototype.localvar = function(s){
@@ -48,7 +56,7 @@ Scope.prototype.getvar = function(s){
 };
 
 Scope.prototype.setvar = function(s,x){
-	return this.loVariables.fSet(s);
+	return this.loVariables.fSet(s,x);
 };
 
 
@@ -57,8 +65,8 @@ Scope.prototype.defelt = function(s,x){
 	return this.loElements.fDefine(s,x);
 };
 
-Scope.prototype.checkelt = function(s,x){
-	return this.loElements.fbExists(s,x);
+Scope.prototype.checkelt = function(s){
+	return this.loElements.fbExists(s);
 };
 
 Scope.prototype.localelt = function(s){
@@ -78,7 +86,7 @@ Scope.prototype.getelt = function(s){
 };
 
 Scope.prototype.setelt = function(s,x){
-	return this.loElements.fSet(s);
+	return this.loElements.fSet(s,x);
 };
 
 // attribute methods
@@ -86,8 +94,8 @@ Scope.prototype.defattr = function(s,x){
 	return this.loAttributes.fDefine(s,x);
 };
 
-Scope.prototype.checkattr = function(s,x){
-	return this.loAttributes.fbExists(s,x);
+Scope.prototype.checkattr = function(s){
+	return this.loAttributes.fbExists(s);
 };
 
 Scope.prototype.localattr = function(s){
@@ -107,7 +115,7 @@ Scope.prototype.getattr = function(s){
 };
 
 Scope.prototype.setattr = function(s,x){
-	return this.loAttributes.fSet(s);
+	return this.loAttributes.fSet(s,x);
 };
 
 
