@@ -130,7 +130,7 @@ var fDefElement = function(scope,jq){
 	var f=eval(sf);
 
 
-	scope.defvar(
+	scope.defelt(
 		sName,
 		function(){
 			return function(scopeIn,jqIn,jq){
@@ -156,7 +156,7 @@ var fDefMacro = function(scope, jq){
 	delete aAttr["query"];
 
 //	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
-	scope.defvar(sName, function(){
+	scope.defelt(sName, function(){
 		return function(scopeIn, jqIn){
 			return function(){
 				var aAttrCall = faAttributes(jqIn);
@@ -307,8 +307,8 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	);
 
 	var ffjq = (
-		scopeIn.checkvar(sElement)
-			? scopeIn.getvar(sElement)
+		scopeIn.checkelt(sElement)
+			? scopeIn.getelt(sElement)
 			: ffjqPassthrough
 	);
 

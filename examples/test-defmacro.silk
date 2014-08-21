@@ -35,7 +35,7 @@ vvvvvvvv
 
 
 <defmacro name="localmacro">
-	As defined globally
+	As defined globally {{_.name}}
 </defmacro>
 
 <localmacro />

@@ -9,7 +9,8 @@
 <localelt />
 
 
-<a>
+<a defelt="foo">
+	 {{_.defelt}}
 	<defelt name="localelt">
 		return function(){
 			return $("<div>As defined locally</div>");
