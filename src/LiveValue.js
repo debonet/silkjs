@@ -36,7 +36,7 @@ LiveValue.prototype.fDirty = function(){
 		// mark dirtyness
 		this.bDirty = true;
 
-//		D("MARKING DIRTY", this.sName, this.vlvListeners.length);
+//		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
 		// so tell listensers
 		var lv = this;
 		this.vlvListeners.forEach(function(lvListener){

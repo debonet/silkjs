@@ -30,25 +30,17 @@
 
 -->
 
-<defelt name="set">
-	return function(){
-		each(_._attributes,function(sVar){
-			scope.parent._[sVar] = _[sVar];
-		});
 
-		return $();
-	}
-</defelt>
-
-
-<a a="{{5}}">
-	<defun name="get">
+this should show 20
+---------------------
+<let a="{{5}}">\
+\	<defun name="get">
 		return function(_){
 			return _.a;
 		}
-	</defun>
-	
-	<b a="{{20}}">
+	</defun>\
+\
+\	<let a="{{20}}">\
 		{{_.get(_)}}
-	</b>
-</a>
+\	</let>\
+</let>

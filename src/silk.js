@@ -3,7 +3,9 @@
 window.Silk = require("./GlobalSilk");
 
 $(function(){
-	Silk.init();
+	Silk.init(function(){
+		$('body').css('visibility','visible');
+	});
 });
 
 

@@ -4,24 +4,10 @@
 		<script src="index.js"></script>
 	</head>
 
-	<body>
+	<body style="visibility:hidden">
 
-		<let my_cents='{{712}}'>
-			<defun name="from_money">
-				return function(x){	
-					 return Math.floor((parseFloat((x+"").replace(/[^0-9.]*/g,'')) || 0)*100);
-				}
-			</defun>
-			<defun name="to_money">
-				return function(x){	return "$" + ((x||0)/100); 	}
-			</defun>
 
-			<input model="my_cents" parse="{{_.from_money}}" format="{{_.to_money}}">
-			<br/>
-			Your variable is: {{_.my_cents}} 
-			The type of your variable is: {{typeof(_.my_cents)}} 
-		</let>
-		
+	<include file="clickdemo.silk">loading demo...</include>		
 		
 	</body>
 </html>

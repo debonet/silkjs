@@ -1,0 +1,31 @@
+		<let my_cents='{{712}}'
+				my2_cents='{{712}}'
+				my3_cents='{{712}}'>
+			<defun name="from_money">
+				return function(x){	
+					 return Math.floor((parseFloat((x+"").replace(/[^0-9.]*/g,'')) || 0)*100);
+				}
+			</defun>
+			<defun name="to_money">
+				return function(x){	return "$" + ((x||0)/100); 	}
+			</defun>
+
+			<input model="my_cents" parse="{{_.from_money}}" format="{{_.to_money}}">
+			<br/>
+			Your variable is: {{_.my_cents}} 
+			The type of your variable is: {{typeof(_.my_cents)}} 
+
+
+
+			<run>
+				scope.defun('fFromMoney3',function(x){	
+					 return Math.floor((parseFloat((x+"").replace(/[^0-9.]*/g,'')) || 0)*100);
+				});
+				scope.defun('fToMoney3', function(x){	return "$" + ((x||0)/100); 	});
+			</run>
+
+
+			<input model="my3_cents" parse="{{_.fFromMoney3}}" format="{{_.fToMoney3}}">
+			Your variable is: {{_.my3_cents}} 
+			The type of your variable is: {{typeof(_.my3_cents)}} 
+		</let>

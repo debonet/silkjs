@@ -1,0 +1,37 @@
+<defelt name="tabs" model="tab">
+
+	return function(){
+		var _ = scope._;
+
+		var jqTabs = _._inner.filter("tab");
+
+		var jqOut = $("<ul></ul>");
+		for (var n=0, c=jqTabs.length; n < c; n++){
+			var jqTab = $("<li>" + $(jqTabs.get(n)).attr("label") + "</li>");
+			
+			jqTab.on('click',(function(n){
+				return function(){
+					scope.parent._[_.model] = n;
+					D("GOT A CLICK ON ",n, scope.parent.loVariables.sName, _.model, scope.parent._.tab);
+					Silk.digest();
+				};
+			})(n));
+			jqOut.append(jqTab)
+		}
+
+		jqOut.append(jqTabs.get(scope.parent._[_.model]));
+
+		return jqOut;
+	}
+</defelt>
+<let tab="{{3}}">
+<tabs model="tab">
+	<tab label="foo">FOO</tab>
+	<tab label="bar">BAR</tab>
+	<tab label="baz">BAZ</tab>
+	<tab label="bing">BING</tab>
+	<tab label="bop">BOP</tab>
+</tabs>
+
+the value of tab is {{_.tab}}
+</let>

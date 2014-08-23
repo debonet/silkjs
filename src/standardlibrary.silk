@@ -154,3 +154,17 @@
 		return jqInstance;
 	}
 </defattr>
+
+
+<!-- setvar -->
+<defelt name="setvar">
+	return function(){
+		var _ = scope._;
+		each(_._attributes,function(sVar){
+			scope.parent._[sVar] = _[sVar];
+		});
+
+		return $();
+	}
+</defelt>
+

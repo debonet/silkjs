@@ -203,13 +203,8 @@ var fDefAttribute = function(scope,jq){
 
 // ---------------------------------------------------------------------------
 var fDefUserFunction = function(scope,jq){
+	var sName = jq.attr("name");
 	var sBody = jq.html();
-
-	var aAttr = faAttributes(jq);
-	var sName = aAttr["name"];
-	delete aAttr["name"];
-
-
 	sBody = fsUnescape(sBody);
 
 	var sf=(
@@ -323,7 +318,8 @@ var ffjqEvalTextElement = function(scope,jqScript){
 // ---------------------------------------------------------------------------
 var ffjqEvalElements = function(scope, jq){
 
-	var scopeInner = new Scope(scope.sName+":INNER");
+	D("CREATING NEW INNER", scope.sName);
+	var scopeInner = new Scope(scope.sName+":INNER" + Math.floor(Math.random()*1000));
 
 	each(jq.get(),function(e,n){
 		scopeInner.defvar(n,ffjqEvalElement(scope, $(e)));

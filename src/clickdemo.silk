@@ -1,0 +1,5 @@
+
+<let a="{{3}}">
+	the value of a is {{_.a}}
+	<button click='_.a=5'>Click ME!</button>
+</let>
