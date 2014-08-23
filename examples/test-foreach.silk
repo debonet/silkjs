@@ -19,7 +19,7 @@
 		// create new, if needed
 		each(a,function(x,s){
 			if (!(s in ascope)){
-				ascope[s] = scope.clone();
+				ascope[s] = new Scope("FOREACH:"+s,scope);
 				ascope[s].defvar(_.as, scope.expr("_.items['" + s + "']"));
 				ascope[s].defvar(_.indexby,s);
 				scopeInner.defvar(s,compile(ascope[s],jq.contents().clone()));
@@ -42,14 +42,13 @@
 </a>
 
 
-<!--
 
 <a x="{{ {'a':11,'b':22,'c':33} }}">
 \	<foreach items="{{_.x}}">\
 		item {{_._index}} is {{_._item}}
 \	</foreach>\
 </a>
--->
+
 
 
 

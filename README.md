@@ -112,11 +112,9 @@ They are constructs that can easily and trivially be written within Silk itself!
 
 ~~~html
 <!-- let element -->
-<defelt name="let">
-	return function(){ 
-		return _._inner;
-	}
-</defelt>
+<defmacro name="let">
+	{{_._inner}}
+</let>
 ~~~
 
 
@@ -183,43 +181,95 @@ They are constructs that can easily and trivially be written within Silk itself!
 
 
 
+How about attributes modifier?
+------------------------------
+
+Oh yeah we do! And it's super easy too. Here's an example
+
+~~~js
+<defattr name="stylize">
+	return function(jqInstance){
+	  jqInstance.find("*").andSelf().css(_.stylize);
+	  return jqInstance;
+	}
+</defattr>
+~~~
+
+will recursively apply a style to the element and it's contents. Just take a look:
+
+~~~js
+
+<defmacro name="foo">
+	<let x="{{_._inner}}">
+		<div>	
+			this is the 
+			<span>
+				value of the inner part
+				{{_.x}}
+				over here
+			</span> 
+			here
+		</div>
+	</let>
+</defmacro>
+
+
+<foo stylize="{{ {'padding':'5'} }}">
+	<span style="font-size: 2em">
+	 	Happy Happy Joy Joy!
+	</span>
+</foo>
+
+~~~
+
+Will give you:
+
+~~~html
+<div style="padding:: 5px;">	
+	this is the 
+	<span style="padding:: 5px;">
+		value of the inner part
+		<span style="font-size:: 2em; padding: 5px;">
+	 		Happy Happy Joy Joy!
+		</span>
+		over here
+	</span> 
+	here
+</div>
+~~~
+
+
 
 
 What about realtime DOM manipulation?
 -------------------------------------
 
-Uh huh. Sure! Take a look at this:
+You bet! Take a look at this:
 
 ~~~js
-<defelt name="watch">
-	return function(){
-		var _ = scope._;
-		var jq = _._inner;
 
-		// safely bind the event using standard jQuery
-		jq.on("input", function(){
-			scope.parent.set(_.var, $(this).val());
+<defattr name="watch">
+	var sVar = _.watch;
+	var sVal = _[sVar];
+	jq.val(sVal);
 
-			// make sure we look for a change
+	return function(jqInstance){
+		jqInstance.on("input", function(){
+			scope.parent.setvar(sVar, $(this).val());
 			Silk.digest();
-			jq.focus();
+			jqInstance.focus();
 		});
-		return jq;
-	};
-</defelt>
+		
+		return jqInstance;
+	}
+</defattr>
 
-
-<div yourinput="no input yet....">
-	<watch var="yourinput">
-		<input>
-	</watch>
-	Your input is: {{_.yourinput}}
-</div>
-
+<let val="initial value" prompt="Type something bozo!">
+	<input watch="val" placeholder="{{_.prompt}}">
+	<br />
+	You typed: {{_.val}} 
+</let>
 ~~~
-
-
-
 
 
 This looks awesome. How can I get involved?

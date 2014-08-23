@@ -31,6 +31,10 @@ Scope.prototype.defvar = function(s,x){
 	return this.loVariables.fDefine(s,x);
 };
 
+Scope.prototype.defun = function(s,x){
+	return this.loVariables.fDefine(s,function(){return x;});
+};
+
 Scope.prototype.defmutable = function(s,x){
 	return this.loVariables.fDefineMutable(s,x);
 };
@@ -124,15 +128,10 @@ Scope.prototype.setattr = function(s,x){
 Scope.prototype.expr = function(x){
 	var scope = this;
 
-	var defvar     = ffBind(scope, 'defvar');
-	var defmutable = ffBind(scope, 'defmutable');
-	var delvar     = ffBind(scope, 'delvar');
-	var checkvar   = ffBind(scope, 'checkvar');
-
 	return eval(
 		""
 			+ "(function(){\n"
-			+ "  var _ = scope._;"
+			+ "  var _ = scope._;\n"
 			+ "  return " + x + ";\n"
 			+ "})"
 	);

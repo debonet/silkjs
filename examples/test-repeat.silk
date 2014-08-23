@@ -11,20 +11,20 @@
 
 		// delete exess
 		vscope = vscope.slice(0,c);
-		for (n=c; n<cAlloc; n++){
+		for (n=c; n < cAlloc; n++){
 			scopeInner.delvar(n);
 		}				
 
 		// make new ones, if needed
 		for (n=vscope.length; n<c; n++){
-			vscope[n] = scope.clone();
+			vscope[n] = new Scope("repeat"+n,scope);
 			vscope[n].defvar(_.indexby, n);
 			scopeInner.defvar(n, compile(vscope[n],jq.contents().clone()));
 		}
 
 		// eval and add
 		var ve = [];
-		for (n=0; n<c; n++){
+		for (n=0; n < c; n++){
 				ve = ve.concat(scopeInner._[n].get());
 		}
 		return $(ve);

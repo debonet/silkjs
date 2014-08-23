@@ -1,0 +1,54 @@
+<!-- 
+
+<defun name="addAB">
+	var a=0;
+	return function(_){
+		a=_.a+_.b;
+		return a;
+	}
+</defun>
+
+<defelt name="addab2">
+	return function(){
+		return $($.parseHTML("" + (_.a+_.b)));
+	}
+</defelt>
+
+
+<a a="{{5}}">
+	<b b="{{_.a + 100}}">
+		a={{_.a}} b={{_.b}}
+		ADDED <addab2></addab2> ]]]]]]]]
+		{{_.addAB(_)}}
+		{{_.addAB(_)}}
+		<set a="{{15}}"></set>
+		{{_.addAB(_)}}
+		{{_.addAB(_)}}
+	</b>
+</a>
+
+
+-->
+
+<defelt name="set">
+	return function(){
+		each(_._attributes,function(sVar){
+			scope.parent._[sVar] = _[sVar];
+		});
+
+		return $();
+	}
+</defelt>
+
+
+<a a="{{5}}">
+	<defun name="get">
+		return function(_){
+			return _.a;
+		}
+	</defun>
+	
+	<b a="{{20}}">
+		{{_.get(_)}}
+	</b>
+</a>

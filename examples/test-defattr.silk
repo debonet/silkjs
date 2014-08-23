@@ -1,0 +1,33 @@
+<defattr name="stylize">
+	return function(jqInstance){
+	  jqInstance.find("*").andSelf().css(_.stylize);
+		return jqInstance;
+	}
+</defattr>
+
+<defmacro name="let">\
+	{{_._inner}}
+</defmacro>
+
+
+<defmacro name="foo">
+	<let x="{{_._inner}}">
+		<div>	
+			this is the 
+			<span>
+				value of the inner part
+				{{_.x}}
+				over here
+			</span> 
+			here
+		</div>
+	</let>
+</defmacro>
+
+
+<foo stylize="{{ {'padding':'5px'} }}">
+	<span style="font-size: 2em">
+	 	Happy Happy Joy Joy!
+	</span>
+</foo>
+

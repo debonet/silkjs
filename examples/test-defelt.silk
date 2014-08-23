@@ -1,25 +1,45 @@
 
+This should show: global <a>variable local</a> global
+-----------------------------------------------------
 
 <defelt name="localelt">
 	return function(){
-		return $("<div>As defined globally</div>");
+		return $("<div>global</div>").contents();
 	}
 </defelt>
 
 <localelt />
 
+<a defelt="variable">
+	{{_.defelt}}
 
-<a defelt="foo">
-	 {{_.defelt}}
 	<defelt name="localelt">
 		return function(){
-			return $("<div>As defined locally</div>");
+			return $("<div>local</div>").contents();
 		}
 	</defelt>
 
 	<localelt/>
-
 </a>
 
 <localelt/>
 
+
+
+
+
+TEST 2
+-------
+<defelt name="simple" a="unset">
+	return function(){
+		return $("<div>" + _.a + "</div>");
+	}
+</defelt>
+
+This should show "unset"
+-----------------------
+<simple></simple>
+
+This should show "5"
+-----------------------
+<simple a="5"></simple>

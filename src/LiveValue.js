@@ -6,7 +6,7 @@ var D = function(){
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 var LiveValue = function(s,x,bMutable){
-	this.sName         = s+Math.floor(Math.random()*1000);
+	this.sName         = s;//+Math.floor(Math.random()*1000);
 	this._x            = undefined;
 	this.vlvDependsOn  = [];
 	this.vlvListeners  = [];

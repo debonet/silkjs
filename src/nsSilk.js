@@ -46,10 +46,11 @@ var faAttributes = function(jq){
 	each(jq[0].attributes, function(aAttr){
 		var sAttr = aAttr["name"];
 		var sVal = aAttr["value"];
-		if (sAttr && typeof(sAttr) === "string" && sVal){
+		if (sAttr && typeof(sAttr) === "string"){
 			a[sAttr] = sVal;
 		}
 	});
+
 	return a;
 };
 
@@ -74,6 +75,9 @@ var fSafeSwapContents = function(jq, jqNewContents){
 // ---------------------------------------------------------------------------
 var ffjqPassthrough = function(scope,jq){
 	return function(){
+		each(scope._._attributes, function(sVar){
+			jq.attr(sVar,scope._[sVar]);
+		});
 		fSafeSwapContents(jq, scope._._inner);
 		return jq;
 	}
@@ -92,13 +96,27 @@ var fsUnescape = function(s){
 };
 
 
-var fsf
-
-
-
 
 // ---------------------------------------------------------------------------
-var fDefElement = function(scope,jq){
+// These are the magic variables which are preadded to all of our execution
+// environments.
+//
+// it only works if the external environment with the
+// eval() call defines the relevant scope "scope"
+// we could make this a function of sScope, but that
+// would incur a runtime penalty
+//
+var sVarClosureForEval = (
+	""
+		+ "var defvar     = ffBind(scope, 'defvar');\n"
+		+ "var defmutable = ffBind(scope, 'defmutable');\n"
+		+ "var delvar     = ffBind(scope, 'delvar');\n"
+		+ "var checkvar   = ffBind(scope, 'checkvar');\n"
+		+ "var _          = scope._;\n"
+);
+
+// ---------------------------------------------------------------------------
+var fDefCode = function(scope,jq, sfDefine){
 	var sBody = jq.html();
 
 	var aAttr = faAttributes(jq);
@@ -117,26 +135,30 @@ var fDefElement = function(scope,jq){
 
 	var sf=(
 		"(function(scope,jq,jqDefinition){\n"
-			+ "var defvar     = ffBind(scope, 'defvar');\n"
-			+ "var defmutable = ffBind(scope, 'defmutable');\n"
-			+ "var delvar     = ffBind(scope, 'delvar');\n"
-			+ "var checkvar   = ffBind(scope, 'checkvar');\n"
-			+ "var _          = scope._;\n"
+			+ sVarClosureForEval
 			+ sBody  + "\n"
 			+"})"
 	);
 
 	// using this eval trick gives us a closure over $ 
-	var f=eval(sf);
+	var f;
+	try{
+		f=eval(sf);
+	}
+	catch(e){
+		D("\nERROR: syntax error in " + sfDefine + " " + sName);
+		throw(e);
+	}
 
-
-	scope.defelt(
+	scope[sfDefine](
 		sName,
 		function(){
 			return function(scopeIn,jqIn,jq){
 				// arguments
 				each(afClosure, function(fClosure, sVar){
-					scopeIn.defvar(sVar, fClosure);
+					if (!scopeIn.localvar(sVar)){
+						scopeIn.defvar(sVar, fClosure);
+					}
 				});
 				return f(scopeIn,jqIn);
 			}
@@ -146,14 +168,69 @@ var fDefElement = function(scope,jq){
 
 
 // ---------------------------------------------------------------------------
+var fDoInScope = function(scope,jq, sfDefine){
+	var sBody = jq.html();
+
+	var aAttr = faAttributes(jq);
+	
+	var afClosure = {};
+	each(aAttr, function(sVal, sVar){
+		// we allow the argument to be an expression
+		afClosure[sVar]=ffxInterpolateString(scope,sVal);//scope.expr(sVal);
+	});
+
+
+	sBody = fsUnescape(sBody);
+
+	var sf=sVarClosureForEval + sBody;
+
+	// using this eval trick gives us a closure over $ 
+	eval(sf);
+};
+
+
+
+// ---------------------------------------------------------------------------
+var fDefElement = function(scope,jq){
+	return fDefCode(scope,jq,'defelt');
+};
+
+// ---------------------------------------------------------------------------
+var fDefAttribute = function(scope,jq){
+	return fDefCode(scope,jq,'defattr');
+};
+
+// ---------------------------------------------------------------------------
+var fDefUserFunction = function(scope,jq){
+	var sBody = jq.html();
+
+	var aAttr = faAttributes(jq);
+	var sName = aAttr["name"];
+	delete aAttr["name"];
+
+
+	sBody = fsUnescape(sBody);
+
+	var sf=(
+		"(function(){\n"
+			+ sVarClosureForEval
+			+ sBody
+			+"})"
+	);
+	var f=eval(sf);
+	scope.defvar(sName, function(){
+		return f();
+	});
+
+};
+
+
+// ---------------------------------------------------------------------------
 var fDefMacro = function(scope, jq){
 	var aAttr = faAttributes(jq);
 	var sName = aAttr["name"];
-	var sScopPPe = "scope";
-	var sQuery = "jq";
 	delete aAttr["name"];
-	delete aAttr["scope"];
-	delete aAttr["query"];
+
 
 //	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
 	scope.defelt(sName, function(){
@@ -174,7 +251,6 @@ var fDefMacro = function(scope, jq){
 			};
 		};
 	});
-
 };
 
 // ---------------------------------------------------------------------------
@@ -216,7 +292,6 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		var ve=[];
 		each(vx,function(x){
 			if (typeof(x) === "function"){
-				var sf=x.toString();
 				x=x();
 			}
 			if (x instanceof $){
@@ -270,28 +345,21 @@ var ffjqEvalElements = function(scope, jq){
 var compile = ffjqEvalElements;
 
 
+var afHandlerForElement = {
+	"defelt"   : fDefElement,
+	"defattr"  : fDefAttribute,
+	"defmacro" : fDefMacro,
+	"defun"    : fDefUserFunction,
+	"run"      : fDoInScope
+};
+
 // ---------------------------------------------------------------------------
 var ffjqEvalElement = function(scopeIn,jqScript){
 	var nNodeType = jqScript.get()[0].nodeType;
 	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
 
+	// comments and empty
 	if (nNodeType === 8 || jqScript.length === 0){
-		return function(){return $();};
-	}
-
-	// defelt
-	if (
-		sElement === "defelt" 
-			|| (sElement === "script" && jqScript.attr("type") === "defelt")
-	){
-		// find defelt
-		fDefElement(scopeIn,jqScript);
-		return function(){return $();};
-	}
- 
-	// defmacro
-	if (sElement === "defmacro"){
-		fDefMacro(scopeIn,jqScript);
 		return function(){return $();};
 	}
 
@@ -300,33 +368,54 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		return ffjqEvalTextElement(scopeIn, jqScript);
 	}
 
+	// handle scripts or remap them
+	if (sElement === "script"){
+		var sType = jqScript.attr("type");
+		if (sType in afHandlerForElement){
+			sElement = sType;
+		}
+		else{
+			return function(){return jqScript;};
+		}
+	}
+	
+	// check if it has a special handler
+	var fHandler = afHandlerForElement[sElement];
+	if (fHandler){
+		fHandler(scopeIn,jqScript);
+		return function(){return $();};
+	}
+
 	// elements
 	var scope = new Scope(
-		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000),
+		scopeIn.sName + "." + sElement, // + Math.floor(Math.random()*1000),
 		scopeIn
 	);
 
-	var ffjq = (
-		scopeIn.checkelt(sElement)
-			? scopeIn.getelt(sElement)
-			: ffjqPassthrough
-	);
+	var bKnownElement = scopeIn.checkelt(sElement);
+
+	var ffjq = (bKnownElement ? scopeIn.getelt(sElement) : ffjqPassthrough);
 
 	// predeclare the _inner so that the element is bound
 	// to the _inner of its own scope
-
 	scope.defvar("_inner");
 	scope.defvar("_createInner");
 
-	var fjq = ffjq(scope,jqScript);
+	var fjq  = ffjq(scope, jqScript);
 
 	var aAttr = faAttributes(jqScript);
 	scope.defvar("_element",sElement);
 	each(aAttr, function(sVal, sVar){
-		aAttr[sVar] =  ffxInterpolateString(scopeIn,sVal);
-		scope.defvar(sVar, aAttr[sVar]);
+		scope.defvar(sVar, ffxInterpolateString(scopeIn,sVal));
 	});
-	scope.defvar("_attributes",aAttr);
+	scope.defvar("_attributes",Object.keys(aAttr));
+
+	var vfjqChange = [];
+	each(aAttr, function(sVal, sVar){
+		if (scopeIn.checkattr(sVar)){
+			vfjqChange.push(scopeIn.getattr(sVar)(scope,jqScript));
+		}
+	});
 
 	scope._._createInner = function(){
 		return function(scope){
@@ -337,7 +426,13 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	// quick alias for _._createInner(_);
 	scope._._inner = ffjqEvalElements(scope, jqScript.contents());
 
-	return fjq;
+	return function(){
+		var jq=fjq();
+		each(vfjqChange, function(fjqChange){
+			jq = fjqChange(jq);
+		});
+		return jq;
+	};
 };
 
 

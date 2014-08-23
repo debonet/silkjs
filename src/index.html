@@ -1,42 +1,73 @@
 <html>
-<head>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-	<script src="index.js"></script>
-</head>
-<body>
+	<head>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script src="index.js"></script>
+	</head>
+	<body>
+
+		<!-- let -->
+		<defelt name="let">
+			return function(){
+				return _._inner;
+			}
+		</defelt>
+
+		<!-- Add click -->
+		<defattr name="click">
+			return function(jqInstance){
+				jqInstance.on("click", function(){
+					eval(_.click);
+					Silk.digest();
+				});
+				
+				return jqInstance;
+			}
+		</defattr>
 
 
+		<!-- identity -->
+		<defun name="identity">
+			return function(x){ 
+				D("IDENTITY",x);
+				return x; 
+			};
+		</defun>
 
-<defelt name="input" store="val">
-	var s=_.val;
-	return function(){
-//		var jq=$("<input>", _._attributes).append(_._inner);
-	jq.val(s);
-	jq.attr(_._attributes);
+		<!-- link between input and data -->
+		<defattr name="model" parse="{{_.identity}}" format="{{_.identity}}">
+			return function(jqInstance){
+				jq.val(_.format(scope._[_.model]));
+				
+				if (!jqInstance.data("sk-model")){
+					jqInstance.on("input", function(){
+						scope.setvar(_.model, _.parse($(this).val()));
+						Silk.digest();
+						jqInstance.focus();
+					});
+					jqInstance.data("sk-model", true);
+				}
+				
+				return jqInstance;
+			}
+		</defattr>
 
-		jq.on("input", function(){
-			scope.parent.setvar(_.store, $(this).val());
-			Silk.digest();
-			jq.focus();
-		});
-		return jq;
-	};
+		
+		<let my_cents='{{712}}'>
+		<defun name="from_money">
+			return function(x){	
+				x=x+""; 
+				return Math.floor((parseFloat(x.replace(/[^0-9.]*/g,'')) || 0)*100);}
+		</defun>
+		<defun name="to_money">
+			return function(x){	return "$" + ((x||0)/100); 	}
+		</defun>
 
-</defelt>
-
-<defelt name="let">
-	return function(){
-		return _._inner;
-	}
-</defelt>
-
-
-<let val="nothing typed yet" prompt="Type something bozo!">
-	<input placeholder="{{_.prompt}}">
-	<br />
-	You typed: {{_.val}} 
-</let>
-
-
-</body>
+			<input model="my_cents" parse="{{_.from_money}}" format="{{_.to_money}}">
+			<br/>
+			Your variable is: {{_.my_cents}} 
+			The type of your variable is: {{typeof(_.my_cents)}} 
+		</let>
+		
+		
+	</body>
 </html>
