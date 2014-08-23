@@ -1,42 +1,53 @@
-var nsSilk = require("./nsSilk.js");
-
-// ---------------------------------------------------------------------------
-// stub out jQuery
-// ---------------------------------------------------------------------------
 var fCreateDom = require("jsdom").env;
 var nsFs = require('fs');
 var nsProcess = process;
-var nsSilk = require("./nsSilk.js");
-var Scope = require("./Scope");
+var GlobalSilk = require("./GlobalSilk");
+
+// make the Silk object global
+global.Silk = GlobalSilk;
 
 var sfl = nsProcess.argv[2] || "../examples/test-repeat.silk";
 var shtml = nsFs.readFileSync(sfl).toString();
 
+// just in case theres already a body in the script we're running
+// swap it out, run the stuff, and print the internal contents only
+shtml = shtml.replace("<body","<__page__");
+shtml = shtml.replace("</body","</__page__");
 
 fCreateDom(
-	"<page></page>",
+	"<body></body>",
 	function(err, window){
-		$ = require('jquery')(window);
-//		$('page').append($.parseHTML(shtml));
+		// this needs to be the global.$ because we're simulating
+		// the browsers version of window.$
+		global.$ = require('jquery')(window);
 
-		shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
-    shtml = shtml.replace(/<\/defelt>/g,"</script>");
- 
-		shtml = shtml.replace(/<defun/g,"<script type='defun'");
-    shtml = shtml.replace(/<\/defun>/g,"</script>");
- 
-		shtml = shtml.replace(/<defattr/g,"<script type='defattr'");
-    shtml = shtml.replace(/<\/defattr>/g,"</script>");
- 
-    $("<!-- -->" + shtml+"<!-- -->").appendTo("page");
+		$('body').append(Silk.parseHTML(shtml));
+
+		
+		var fPrintBody = function(nIteration){
+			console.log('---------------------------------------------------- Iteration ' + nIteration );
+			console.log($('__page__,body').last().html());
+		};
 
 
-		var scope = new Scope("global");
-		scope.defvar('_page', nsSilk.compile(scope, $('page')));
-//		var jq = scope.getvar("_page");
-		var jq = nsSilk.digest(scope,"_page");
+		var ffMaxFreq = function(f,dtm){
+			var timeout;
+			var nIteration = 0;
+			return function(){
+				if (timeout){
+					nIteration++;
+					clearTimeout(timeout);
+					timeout=null;
+				}
+				timeout = setTimeout(function(){
+					timeout=null;
+					f(nIteration);
+				},dtm);
+			}
+		};
 
-		console.log(jq.html().replace(/^[\n\s]*$/gmi,''));
+
+		Silk.init(ffMaxFreq(fPrintBody,100));
 	}
 );
 

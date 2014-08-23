@@ -1,0 +1,156 @@
+<!-- let -->
+<defelt name="let">
+	return function(){
+		var _ = scope._;
+		return _._inner;
+	}
+</defelt>
+
+
+<!-- if element -->
+<defelt name="if" test="{{false}}">
+	return function(){
+		var _ = scope._;
+		if (_.test){
+			return _._inner;
+		}
+		return $();
+	};
+</defelt>
+
+
+<!-- switch/case -->
+<defelt name="switch">
+	defmutable('switchflag', false); // non watched!
+	return function(){
+		var _ = scope._;
+		return _._inner;
+	};
+</defelt>
+<defelt name="case" test="{{true}}">
+	return function(){
+		var _ = scope._;
+		if (!_.switchflag && _.test){
+			_.switchflag = true;
+			return _._inner;
+		}
+		return $();
+	};
+</defelt>
+
+
+<!-- repeat element -->
+<defelt name="repeat" times="0" indexby="_index">
+	var vscope = [];
+	var scopeInner = new Scope();
+
+	return function(){
+		var _ = scope._;
+		var jqOut = $();
+		var n;
+		var c = _.times;
+		var cAlloc = vscope.length;
+
+		// delete exess
+		vscope = vscope.slice(0,c);
+		for (n=c; n < cAlloc; n++){
+			scopeInner.delvar(n);
+		}				
+
+		// make new ones, if needed
+		for (n=vscope.length; n<c; n++){
+		vscope[n] = new Scope("repeat"+n,scope);
+		vscope[n].defvar(_.indexby, n);
+		scopeInner.defvar(n, compile(vscope[n],jq.contents().clone()));
+		}
+
+		// eval and add
+		var ve = [];
+		for (n=0; n < c; n++){
+			ve = ve.concat(scopeInner._[n].get());
+		}
+		return $(ve);
+	};
+</defelt>
+
+
+<!-- foreach element -->
+<defelt scope="_" name="foreach" items="{{[]}}" as="_item" indexby="_index">
+	var ascope = {};
+	var scopeInner = new Scope();
+
+	return function(){
+		var _ = scope._;
+		var jqOut = $();
+
+		var a=_.items;
+
+		// delete exess, if changed 
+		each(ascope,function(scope,s){
+			if (!(s in a)){
+				delete ascope[s];
+				scopeInner.del(s);
+			}
+		});
+
+		// create new, if needed
+		each(a,function(x,s){
+			if (!(s in ascope)){
+				ascope[s] = new Scope("FOREACH:"+s,scope);
+				ascope[s].defvar(_.as, scope.expr("_.items['" + s + "']"));
+				ascope[s].defvar(_.indexby,s);
+				scopeInner.defvar(s,compile(ascope[s],jq.contents().clone()));
+			}
+		});
+
+		// eval and add
+		var ve = [];
+		each(a,function(x,s){
+			ve = ve.concat(scopeInner._[s].get());
+		});
+		return $(ve);
+	};
+</defelt>
+
+
+
+<!-- Add click -->
+<defattr name="click">
+	return function(jqInstance){
+		var _ = scope._;
+		jqInstance.on("click", function(){
+			eval(_.click);
+			Silk.digest();
+		});
+		
+		return jqInstance;
+	}
+</defattr>
+
+
+<!-- __identity__ -->
+<defun name="__identity__">
+	return function(x){ 
+		D("__IDENTITY__",x);
+		return x; 
+	};
+</defun>
+
+<!-- model link between input and data -->
+<defattr name="model" parse="{{_.__identity__}}" format="{{_.__identity__}}">
+	return function(jqInstance){
+		var _ = scope._;
+		jq.val(_.format(scope._[_.model]));
+		
+		if (!jqInstance.data("sk-model")){
+			jqInstance.on("input", function(){
+				scope.setvar(_.model, _.parse($(this).val()));
+				Silk.digest();
+				jqInstance.focus();
+			});
+			jqInstance.data("sk-model", true);
+		}
+		
+		return jqInstance;
+	}
+</defattr>

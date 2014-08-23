@@ -1,0 +1,33 @@
+
+<defmacro 
+	 name="describefamily" 
+	 person="some person name" 
+	 relationship="mother" 
+	 kids="[]">
+
+	<let len="{{_.kids.length}}">
+	 	Did you know that {{_.person}} is the {{_.relationship}} of {{_.len}} kids.
+		<if test="{{_.kids.length > 0}}">
+			They are:
+			<ul>
+				<foreach items="{{_.kids}}" as="kid" indexby="num" len="{{_.kids.length}}">
+					<li>
+						<if test="{{_.num === _.len - 1}}">and </if>\
+\						{{_.kid.name}}, age {{_.kid.age}}
+					</li>
+				</foreach>
+			</ul>
+		</if>
+	</let>
+
+</defmacro>
+
+<describefamily 
+	 person="Donald Duck" 
+	 relationship="uncle"
+	 kids='{{ [
+	 {name: "Huey",  age: 7},
+	 {name: "Dewey", age: 7},
+	 {name: "Louie", age: 7}
+	 ] }}'
+	 />

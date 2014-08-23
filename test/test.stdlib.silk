@@ -1,0 +1,6 @@
+<include file="../test/helloworld.silk">not loaded yet</include>
+
+<let a="5">
+	the value of a is {{_.a}}
+</let>
+

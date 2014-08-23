@@ -123,7 +123,8 @@ var fDefCode = function(scope,jq, sfDefine){
 	var sName = aAttr["name"];
 	delete aAttr["name"];
 
-	
+	//D("DEFINING",scope.sName,sfDefine,sName);
+
 	var afClosure = {};
 	each(aAttr, function(sVal, sVar){
 		// we allow the argument to be an expression

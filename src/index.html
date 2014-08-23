@@ -3,64 +3,18 @@
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 		<script src="index.js"></script>
 	</head>
+
 	<body>
 
-		<!-- let -->
-		<defelt name="let">
-			return function(){
-				return _._inner;
-			}
-		</defelt>
-
-		<!-- Add click -->
-		<defattr name="click">
-			return function(jqInstance){
-				jqInstance.on("click", function(){
-					eval(_.click);
-					Silk.digest();
-				});
-				
-				return jqInstance;
-			}
-		</defattr>
-
-
-		<!-- identity -->
-		<defun name="identity">
-			return function(x){ 
-				D("IDENTITY",x);
-				return x; 
-			};
-		</defun>
-
-		<!-- link between input and data -->
-		<defattr name="model" parse="{{_.identity}}" format="{{_.identity}}">
-			return function(jqInstance){
-				jq.val(_.format(scope._[_.model]));
-				
-				if (!jqInstance.data("sk-model")){
-					jqInstance.on("input", function(){
-						scope.setvar(_.model, _.parse($(this).val()));
-						Silk.digest();
-						jqInstance.focus();
-					});
-					jqInstance.data("sk-model", true);
-				}
-				
-				return jqInstance;
-			}
-		</defattr>
-
-		
 		<let my_cents='{{712}}'>
-		<defun name="from_money">
-			return function(x){	
-				x=x+""; 
-				return Math.floor((parseFloat(x.replace(/[^0-9.]*/g,'')) || 0)*100);}
-		</defun>
-		<defun name="to_money">
-			return function(x){	return "$" + ((x||0)/100); 	}
-		</defun>
+			<defun name="from_money">
+				return function(x){	
+					 return Math.floor((parseFloat((x+"").replace(/[^0-9.]*/g,'')) || 0)*100);
+				}
+			</defun>
+			<defun name="to_money">
+				return function(x){	return "$" + ((x||0)/100); 	}
+			</defun>
 
 			<input model="my_cents" parse="{{_.from_money}}" format="{{_.to_money}}">
 			<br/>

@@ -32,7 +32,7 @@ TEST 2
 -------
 <defelt name="simple" a="unset">
 	return function(){
-		return $("<div>" + _.a + "</div>");
+		return $("<div>" + _.a + "</div>").contents();
 	}
 </defelt>
 
