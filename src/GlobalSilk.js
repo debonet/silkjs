@@ -8,16 +8,16 @@ var GlobalSilk={};
 GlobalSilk.scope = new Scope("global"),
 
 // --------------------------------------------------------------------
-GlobalSilk.fCallback = function(){console.log("callback")},
+GlobalSilk.fCallbackDigest = function(){console.log("callback")},
 
 // --------------------------------------------------------------------
 GlobalSilk.digest = function(){
 	nsSilk.fSafeSwapContents($('body'), nsSilk.digest(this.scope,'_page'));
-	this.fCallback();
+	this.fCallbackDigest();
 },
 
 // --------------------------------------------------------------------
-GlobalSilk.init = function(fCallback){
+GlobalSilk.init = function(fCallbackDigest){
 	var jq=$('body').contents();
 
 	this.scope.defvar('_page');
@@ -31,7 +31,7 @@ GlobalSilk.init = function(fCallback){
 		nsSilk.compile(GlobalSilk.scope,Silk.parseHTML(sData))();
 
 		GlobalSilk.scope.setvar('_page', nsSilk.compile(GlobalSilk.scope, jq));
-		GlobalSilk.fCallback = fCallback || GlobalSilk.fCallback;
+		GlobalSilk.fCallbackDigest = fCallbackDigest || GlobalSilk.fCallbackDigest;
 		GlobalSilk.digest();
 	});
 

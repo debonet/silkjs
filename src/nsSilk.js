@@ -318,7 +318,6 @@ var ffjqEvalTextElement = function(scope,jqScript){
 // ---------------------------------------------------------------------------
 var ffjqEvalElements = function(scope, jq){
 
-	D("CREATING NEW INNER", scope.sName);
 	var scopeInner = new Scope(scope.sName+":INNER" + Math.floor(Math.random()*1000));
 
 	each(jq.get(),function(e,n){
