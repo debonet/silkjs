@@ -17,8 +17,6 @@ module.exports = function(Silk, scope){
 							_.file, 
 							Silk.compile(scope.parent, Silk.parseHTML(sData))
 						);
-
-						Silk.digest();
 					});
 				}
 					

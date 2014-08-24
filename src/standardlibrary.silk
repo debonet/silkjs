@@ -120,7 +120,6 @@
 		var _ = scope._;
 		jqInstance.on("click", function(){
 			eval(_.click);
-			Silk.digest();
 		});
 		
 		return jqInstance;
@@ -145,7 +144,6 @@
 		if (!jqInstance.data("sk-model")){
 			jqInstance.on("input", function(){
 				scope.setvar(_.model, _.parse($(this).val()));
-				Silk.digest();
 				jqInstance.focus();
 			});
 			jqInstance.data("sk-model", true);

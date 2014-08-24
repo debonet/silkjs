@@ -8,6 +8,10 @@
 
 
 	<include file="clickdemo.silk">loading demo...</include>		
-		
+
+	<let x="{{5}}">
+		<setvar x="{{Math.min(_.x + 1,10)}}"></setvar>
+		{{_.x}}
+	</let>
 	</body>
 </html>

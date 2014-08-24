@@ -27,8 +27,8 @@ Object.defineProperty(
 );
 
 // variable methods
-Scope.prototype.defvar = function(s,x){
-	return this.loVariables.fDefine(s,x);
+Scope.prototype.defvar = function(s,x,f){
+	return this.loVariables.fDefine(s,x,f);
 };
 
 Scope.prototype.defun = function(s,x){

@@ -117,13 +117,13 @@ LiveObject.prototype.fRemakeAccessLayer = function(){
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fDefine = function(s,x){
+LiveObject.prototype.fDefine = function(s,x,f){
 
 	var bExistsLocal = this.fbExistsLocally(s);
 
 	if (!bExistsLocal){
 		var bExists = this.fbExists(s);
-		this.alv[s] = new LiveValue(this.sName + ":" + s, x);
+		this.alv[s] = new LiveValue(this.sName + ":" + s, x, false, f);
 		if (!bExists){
 			this.fRemakeAccessLayer();
 		}
@@ -136,12 +136,12 @@ LiveObject.prototype.fDefine = function(s,x){
 
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fDefineMutable = function(s,x){
+LiveObject.prototype.fDefineMutable = function(s,x,f){
 
 	var bExistsLocal = this.fbExistsLocally(s);
 	if (!bExistsLocal){
 		var bExists = this.fbExists(s);
-		this.alv[s] = new LiveValue(this.sName + ":" + s, x, true);
+		this.alv[s] = new LiveValue(this.sName + ":" + s, x, true, f);
 		if (!bExists){
 			this.fRemakeAccessLayer();
 		}

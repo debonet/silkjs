@@ -13,7 +13,6 @@
 				return function(){
 					scope.parent._[_.model] = n;
 					D("GOT A CLICK ON ",n, scope.parent.loVariables.sName, _.model, scope.parent._.tab);
-					Silk.digest();
 				};
 			})(n));
 			jqOut.append(jqTab)

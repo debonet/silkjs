@@ -5,14 +5,21 @@ var D = function(){
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var LiveValue = function(s,x,bMutable){
-	this.sName         = s;//+Math.floor(Math.random()*1000);
-	this._x            = undefined;
-	this.vlvDependsOn  = [];
-	this.vlvListeners  = [];
-	this._xCached      = null;
-	this.bDirty        = false;
-	this.bMutable      = !!bMutable;
+var LiveValue = function(s,x,bMutable,fCallbackDirty){
+	this.sName          = s;//+Math.floor(Math.random()*1000);
+	this._x             = undefined;
+	this.vlvDependsOn   = [];
+	this.vlvListeners   = [];
+	this._xCached       = null;
+	this.bDirty         = false;
+	if (bMutable){
+		this.bMutable       = !!bMutable;
+	}
+	
+	if (fCallbackDirty){
+		this.fCallbackDirty = fCallbackDirty;
+	}
+
 	this.fSet(x);
 };
 
@@ -33,10 +40,15 @@ LiveValue.prototype.fSet = function(x){
 LiveValue.prototype.fDirty = function(){	
 	// if we weren't already dirty we are now 
 	if (!this.bDirty){
+//		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
+
+		if (this.fCallbackDirty){
+			this.fCallbackDirty();
+		}
+
 		// mark dirtyness
 		this.bDirty = true;
 
-//		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
 		// so tell listensers
 		var lv = this;
 		this.vlvListeners.forEach(function(lvListener){

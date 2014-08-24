@@ -5,22 +5,53 @@ var fStandardLibrary = require("./fStandardLibrary");
 var GlobalSilk={};
 
 // --------------------------------------------------------------------
-GlobalSilk.scope = new Scope("global"),
+GlobalSilk.scope = new Scope("global");
 
 // --------------------------------------------------------------------
-GlobalSilk.fCallbackDigest = function(){console.log("callback")},
+GlobalSilk.fCallbackDigest = function(){console.log("callback")};
+
+
+
+
+
+
+
 
 // --------------------------------------------------------------------
-GlobalSilk.digest = function(){
-	nsSilk.fSafeSwapContents($('body'), nsSilk.digest(this.scope,'_page'));
-	this.fCallbackDigest();
-},
+var cIteration = 0;
+var timeoutDraw;
+var ffOnDirty = function(fCallback){
+
+	return function(){
+		if (!timeoutDraw){
+			cIteration ++;
+			if (cIteration >= 10){
+				return fCallback("TOO MANY ITERATIONS");
+			}
+
+			timeoutDraw = setTimeout(function(){
+				timeoutDraw = undefined;
+				var jq = Silk.scope._._page;
+				if (Silk.scope.loVariables.fbIsDirty("_page")){
+					return;
+				}
+
+				cIteration = 0;
+				fCallback(null, jq);
+			}, 1);
+
+		}
+	};
+};
+
+			
 
 // --------------------------------------------------------------------
-GlobalSilk.init = function(fCallbackDigest){
+GlobalSilk.init = function(fCallback){
 	var jq=$('body').contents();
 
-	this.scope.defvar('_page');
+	this.scope.defvar('_page',undefined,ffOnDirty(fCallback));
+	this.scope.getvar('_page');
 
 	fStandardLibrary(this, this.scope);
 
@@ -29,13 +60,11 @@ GlobalSilk.init = function(fCallbackDigest){
 	// deployemnt
 	GlobalSilk.fGet('standardlibrary.silk', function(err,sData){
 		nsSilk.compile(GlobalSilk.scope,Silk.parseHTML(sData))();
-
 		GlobalSilk.scope.setvar('_page', nsSilk.compile(GlobalSilk.scope, jq));
-		GlobalSilk.fCallbackDigest = fCallbackDigest || GlobalSilk.fCallbackDigest;
-		GlobalSilk.digest();
+		// no need to callback. _page will take care of it.
 	});
 
-},
+};
 
 // --------------------------------------------------------------------
 GlobalSilk.cleanHTML = function(shtml){
@@ -50,17 +79,6 @@ GlobalSilk.cleanHTML = function(shtml){
 
 	return shtml;
 },
-
-// --------------------------------------------------------------------
-GlobalSilk.parseHTML = function(shtml){
-	return $($.parseHTML(this.cleanHTML(shtml)));
-},
-
-// --------------------------------------------------------------------
-GlobalSilk.compile = nsSilk.compile,
-
-// --------------------------------------------------------------------
-GlobalSilk.Scope = Scope,
 
 // --------------------------------------------------------------------
 GlobalSilk.fGet = (
@@ -84,6 +102,17 @@ GlobalSilk.fGet = (
 		});
 	}
 );
+
+
+// --------------------------------------------------------------------
+GlobalSilk.parseHTML = function(shtml){
+	return $($.parseHTML(this.cleanHTML(shtml)));
+};
+
+// --------------------------------------------------------------------
+GlobalSilk.setContents = nsSilk.fSafeSwapContents;
+GlobalSilk.compile = nsSilk.compile;
+GlobalSilk.Scope = Scope;
 
 
 module.exports = GlobalSilk;
