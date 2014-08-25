@@ -272,6 +272,96 @@ You bet! Take a look at this:
 ~~~
 
 
+
+Ok, so show me some examples
+----------------------------
+
+How about tabs? Wouldn't it be nice to write:
+
+~~~html
+<let mytab="{{3}}">
+	<tabs chosen="mytab" class="mytabclass">
+		<tab label="foo">Contents for tab foo</tab>
+		<tab label="bar">Contents for tab bar</tab>
+		<tab label="baz">Contents for tab baz</tab>
+	</tabs>
+
+	You've selected {{_.mytab}}
+</let>
+~~~
+
+And have it do the obvious thing. You can. Tabs can be defined programatically with `<defelt>`:
+
+~~~js
+<defelt name="tabs" chosen="tab">
+
+	return function(){
+		var _ = scope._;
+
+		var jqTabs = _._inner.filter("tab");
+
+		var jqOut = $("<ul></ul>");
+		for (var n=0, c=jqTabs.length; n < c; n++){
+			var jqTab = $("<li>" + $(jqTabs.get(n)).attr("label") + "</li>");
+			
+			jqTab.on('click',(function(n){
+				return function(){
+					_[_.chosen] = n;
+				};
+			})(n));
+			jqOut.append(jqTab)
+		}
+
+		jqOut.append(jqTabs.eq(_[_.chosen]).contentes());
+
+		return jqOut;
+	}
+</defelt>
+~~~
+
+
+Or, even simpler, as a `<defmacro>`:
+
+~~~html
+<defmacro name="tabs" chosen="tab">
+	<let tabscontent="{{_._inner.filter('tab')}}">
+
+		<ul>
+			<foreach items="{{_.tabscontent}}"  as="tabcontent" indexby="tabnum">
+				<li click="_[_.chosen] = _.tabnum" >
+					{{_.tabscontent.eq(_.tabnum).attr("label")}}
+				</li>
+			</foreach>			
+		</ul>
+
+	{{_.tabscontent.eq(_[_.chosen]).contents()}}
+
+	</let>
+</defmacro>
+~~~
+
+
+and of course, your new `<tabs>` and `<tab>` elements can be freely combined with other
+constructs:
+
+
+~~~html
+<let mytab="{{3}}">
+	<tabs chosen="mytab" class="mytabclass">
+		<foreach items='{{ ["foo", "bar", "baz", "bing', "bop"] }}'>
+			<tab label="{{_._item}}">
+				Contents for tab {{_._item}}
+			</tab>
+		</foreach>
+	</tabs>
+
+	You've selected {{_.mytab}}
+</let>
+~~~
+
+
+
+
 This looks awesome. How can I get involved?
 -------------------------------------------
 

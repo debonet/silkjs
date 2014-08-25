@@ -1,4 +1,4 @@
-<defelt name="tabs" model="tab">
+<defelt name="tabs" chosen="tab">
 
 	return function(){
 		var _ = scope._;
@@ -11,26 +11,110 @@
 			
 			jqTab.on('click',(function(n){
 				return function(){
-					scope.parent._[_.model] = n;
-					D("GOT A CLICK ON ",n, scope.parent.loVariables.sName, _.model, scope.parent._.tab);
+					scope.parent._[_.chosen] = n;
 				};
 			})(n));
 			jqOut.append(jqTab)
 		}
 
-		jqOut.append(jqTabs.get(scope.parent._[_.model]));
+		jqOut.append(jqTabs.get(scope.parent._[_.chosen]));
 
 		return jqOut;
 	}
 </defelt>
-<let tab="{{3}}">
-<tabs model="tab">
-	<tab label="foo">FOO</tab>
-	<tab label="bar">BAR</tab>
-	<tab label="baz">BAZ</tab>
-	<tab label="bing">BING</tab>
-	<tab label="bop">BOP</tab>
-</tabs>
 
-the value of tab is {{_.tab}}
+
+
+
+
+
+<!--
+<defmacro name="tabs" chosen="tab">
+	<let tabscontent="{{_._inner.filter('tab')}}">
+
+		<ul class="{{_.class}}">
+			<foreach items="{{_.tabscontent}}"  as="tabcontent" indexby="tabnum">
+				<li 
+					 click="_[_.chosen] = _.tabnum" 
+					 class="{{_.tabnum == _[_.chosen] ? 'chosen' : ''}}"
+					 >
+					{{_.tabscontent.eq(_.tabnum).attr("label")}}
+				</li>
+			</foreach>			
+		</ul>
+
+		<let tabchosen="{{ _.tabscontent.eq(_[_.chosen]) }}">
+			<div class="{{_.tabchosen.attr('class') || ''}}">
+				{{_.tabchosen.contents()}}
+			</div>
+		</let>
+
+	</let>
+</defmacro>
+
+
+
+<defmacro name="tabs" chosen="tab">
+	<let tabscontent="{{_._inner.filter('tab')}}">
+
+		<ul>
+			<foreach items="{{_.tabscontent}}"  as="tabcontent" indexby="tabnum">
+				<li click="_[_.chosen] = _.tabnum" >
+					{{_.tabscontent.eq(_.tabnum).attr("label")}}
+				</li>
+			</foreach>			
+		</ul>
+
+		<div>
+			{{_.tabscontent.eq(_[_.chosen]).contents()}}
+		</div>
+
+	</let>
+</defmacro>
+-->
+
+
+<let mytab="{{3}}">
+	<tabs chosen="mytab" class="mytabclass">
+		<tab label="foo">Contents for tab foo</tab>
+		<tab label="bar">Contents for tab bar</tab>
+		<tab label="baz">Contents for tab baz</tab>
+	</tabs>
+
+	You've selected {{_.mytab}}
 </let>
+
+<let mytab="{{3}}">
+	<tabs chosen="mytab" class="mytabclass">
+		<foreach items='{{ ["foo", "bar", "baz"] }}'>
+			<tab label="{{_._item}}">
+				Contents for tab {{_._item}}
+			</tab>
+		</foreach>
+	</tabs>
+
+	You've selected {{_.mytab}}
+</let>
+
+
+
+
+<!--
+
+<defmacro name="tabs" model="tab">
+	<let tabscontent="{{_._inner}}">
+		<ul>
+			<foreach items="{{_.tabscontent.filter('tab')}}"  as="tabcontent" indexby="tabnum">
+				<li click="_.tab = _.tabnum ">
+					Tab {{_.tabnum}}
+				</li>
+			</foreach>			
+		</ul>
+	{{_.tabscontent.eq(_.model)}}
+	</let>
+</defmacro>
+
+
+
+-->
+

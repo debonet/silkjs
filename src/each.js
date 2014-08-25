@@ -6,6 +6,14 @@ var each = function(x,f){
 			f(vx[n],n,vx);
 		}
 	}
+	else if (x instanceof $){
+		var jq=x;
+		var vjq=[];
+		for (var n=0,c=jq.get().length; n<c; n++){
+			vjq.push(jq.eq(n));
+		}
+		return each(vjq,f);
+	}
 	else{
 		var ax = x;
 		for(var sKey in ax){

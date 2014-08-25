@@ -130,7 +130,6 @@
 <!-- __identity__ -->
 <defun name="__identity__">
 	return function(x){ 
-		D("__IDENTITY__",x);
 		return x; 
 	};
 </defun>
