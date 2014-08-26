@@ -9,18 +9,18 @@ module.exports = function(Silk, scope){
 			return function(){
 				var _ = scope._;
 
-				if (!scopeInclude.checkvar(_.file)){
-					scopeInclude.defvar(_.file, _._inner);
+				if (!scopeInclude.checkvar(_.url)){
+					scopeInclude.defvar(_.url, _._inner);
 
-					Silk.fGet(_.file, function(err,sData){
+					Silk.fGet(_.url, function(err,sData){
 						scopeInclude.setvar(
-							_.file, 
+							_.url, 
 							Silk.compile(scope.parent, Silk.parseHTML(sData))
 						);
 					});
 				}
 					
-				return scopeInclude.getvar(_.file);
+				return scopeInclude.getvar(_.url);
 			};
 		};
 	});

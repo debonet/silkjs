@@ -1,7 +1,6 @@
 <!-- let -->
 <defelt name="let">
 	return function(){
-		var _ = scope._;
 		return _._inner;
 	}
 </defelt>
@@ -10,7 +9,6 @@
 <!-- if element -->
 <defelt name="if" test="{{false}}">
 	return function(){
-		var _ = scope._;
 		if (_.test){
 			return _._inner;
 		}
@@ -23,13 +21,11 @@
 <defelt name="switch">
 	defmutable('switchflag', false); // non watched!
 	return function(){
-		var _ = scope._;
 		return _._inner;
 	};
 </defelt>
 <defelt name="case" test="{{true}}">
 	return function(){
-		var _ = scope._;
 		if (!_.switchflag && _.test){
 			_.switchflag = true;
 			return _._inner;
@@ -45,7 +41,6 @@
 	var scopeInner = new Scope();
 
 	return function(){
-		var _ = scope._;
 		var jqOut = $();
 		var n;
 		var c = _.times;
@@ -80,7 +75,6 @@
 	var scopeInner = new Scope();
 
 	return function(){
-		var _ = scope._;
 		var jqOut = $();
 
 		var a=_.items;
@@ -117,7 +111,6 @@
 <!-- Add click -->
 <defattr name="click">
 	return function(jqInstance){
-		var _ = scope._;
 		jqInstance.on("click", function(){
 			eval(_.click);
 		});
@@ -137,7 +130,6 @@
 <!-- model link between input and data -->
 <defattr name="model" parse="{{_.__identity__}}" format="{{_.__identity__}}">
 	return function(jqInstance){
-		var _ = scope._;
 		jq.val(_.format(scope._[_.model]));
 		
 		if (!jqInstance.data("sk-model")){
@@ -156,7 +148,6 @@
 <!-- setvar -->
 <defelt name="setvar">
 	return function(){
-		var _ = scope._;
 		each(_._attributes,function(sVar){
 			scope.parent._[sVar] = _[sVar];
 		});

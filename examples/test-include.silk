@@ -5,8 +5,6 @@
 	defvar("_bLoaded", false);
 
 	return function(){
-		var _ = scope._;
-
 		if (!_._bLoaded){
 			$.ajax({
 				url: _.file,

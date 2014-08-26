@@ -17,19 +17,12 @@ var LiveObject = function(s, loParent){
 	this.vloChildren = [];
 	this.vlvListeners = [];
 
+	this.aAccessLayer = {};
+
 	if(loParent){
 		loParent.vloChildren.push(this);
+		this.aAccessLayer.__proto__ = loParent.aAccessLayer;
 	}
-	this.fRemakeAccessLayer();
-};
-
-// ---------------------------------------------------------------------------
-LiveObject.prototype.floClone = function(s){
-	D("CLONE CALLED?????");
-	var lo = new LiveObject(s,this);
-	this.vloChildren.push(lo);
-	lo.fRemakeAccessLayer();
-	return lo;
 };
 
 
@@ -56,6 +49,20 @@ Object.defineProperty(
 		get: function(){return this.loParent;}
 	}
 );
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fCheckHonesty = function(){
+	var lo=this;
+	each(this.aAccessLayer, function(x,s){
+		if (!(s in lo.alv)){
+			throw("ILLEGAL VARIABLE ASSIGNMENT TO ACCESSLAYER " + lo.sName + "."+ s);
+		}
+	});
+
+	each(this.vloChildren, function(lo){
+		lo.fCheckHonesty();
+	});
+};
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fvslv = function(){
@@ -90,73 +97,46 @@ LiveObject.prototype.faSimple = function(){
 
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fRemakeAccessLayer = function(){
-	delete this.aAccessLayer;
-	this.aAccessLayer = {};
+LiveObject.prototype.fDefine = function(s,x,f,bMutable){
 
-	var vslv = this.fvslv();
+	var bExistsLocal = this.fbExistsLocally(s);
 
-	var lo = this;
-	vslv.forEach(function(s,n){
+	var lo=this;
+	if (!bExistsLocal){
+		this.alv[s] = new LiveValue(this.sName + ":" + s, x, bMutable, f);
 		Object.defineProperty(
 			lo.aAccessLayer,	s, {
-				get : function(){return lo.fxGet(s);},
-				set : function(x){return lo.fSet(s,x);},
+				get : function(){return lo.alv[s].fxGet();},
+				set : function(x){return lo.alv[s].fSet(x);},
 				configurable: true,
 				enumerable: true,
 				writeable : false
 			}
 		);
-	});
-	
-	Object.freeze(this.aAccessLayer);
-
-	each(this.vloChildren, function(lo){
-		lo.fRemakeAccessLayer();
-	});
-};
-
-// ---------------------------------------------------------------------------
-LiveObject.prototype.fDefine = function(s,x,f){
-
-	var bExistsLocal = this.fbExistsLocally(s);
-
-	if (!bExistsLocal){
-		var bExists = this.fbExists(s);
-		this.alv[s] = new LiveValue(this.sName + ":" + s, x, false, f);
-		if (!bExists){
-			this.fRemakeAccessLayer();
-		}
 	}
 	else{
-		this.bMutable = false;
-		this.fSet(s,x);
+		while(lo){
+			if (lo.fbExistsLocally(s)){
+				lo.alv[s].bMutable = bMutable;
+				lo.alv[s].fSet(x);
+				return;
+			}
+			lo = lo.loParent;
+		}
+		D("UNTRACKED DEFINE",this.sName,s);
 	}
 };
-
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDefineMutable = function(s,x,f){
-
-	var bExistsLocal = this.fbExistsLocally(s);
-	if (!bExistsLocal){
-		var bExists = this.fbExists(s);
-		this.alv[s] = new LiveValue(this.sName + ":" + s, x, true, f);
-		if (!bExists){
-			this.fRemakeAccessLayer();
-		}
-	}
-	else{
-		this.bMutable = true;
-		this.fSet(s,x);
-	}
+	this.fDefine(s,x,f,true);
 };
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDelete = function(s){
-	if (s in this.alv){
+	if (s in this.aAccessLayer){
 		delete this.alv[s];
-		this.fRemakeAccessLayer();
+		delete this.aAccessLayer[s];
 		return;
 	}
 	D("UNKNOWN VARIABLE ",this.sName,s);

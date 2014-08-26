@@ -10,13 +10,6 @@ GlobalSilk.scope = new Scope("global");
 // --------------------------------------------------------------------
 GlobalSilk.fCallbackDigest = function(){console.log("callback")};
 
-
-
-
-
-
-
-
 // --------------------------------------------------------------------
 var cIteration = 0;
 var timeoutDraw;
@@ -36,6 +29,8 @@ var ffOnDirty = function(fCallback){
 					return;
 				}
 
+				Silk.scope.loVariables.fCheckHonesty();
+
 				cIteration = 0;
 				fCallback(null, jq);
 			}, 1);
@@ -43,8 +38,6 @@ var ffOnDirty = function(fCallback){
 		}
 	};
 };
-
-			
 
 // --------------------------------------------------------------------
 GlobalSilk.init = function(fCallback){
@@ -63,7 +56,6 @@ GlobalSilk.init = function(fCallback){
 		GlobalSilk.scope.setvar('_page', nsSilk.compile(GlobalSilk.scope, jq));
 		// no need to callback. _page will take care of it.
 	});
-
 };
 
 // --------------------------------------------------------------------

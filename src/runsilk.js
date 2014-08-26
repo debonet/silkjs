@@ -22,32 +22,15 @@ fCreateDom(
 		global.$ = require('jquery')(window);
 
 		$('body').append(Silk.parseHTML(shtml));
-
 		
-		var fPrintBody = function(nIteration){
+		var nIteration = 0;
+		var fPrintBody = function(err, jq){
 			console.log('---------------------------------------------------- Iteration ' + nIteration );
-			console.log($('__page__,body').last().html());
+			nIteration++;
+			console.log($("<div></div>").append(jq).html());
 		};
 
-
-		var ffMaxFreq = function(f,dtm){
-			var timeout;
-			var nIteration = 0;
-			return function(){
-				if (timeout){
-					nIteration++;
-					clearTimeout(timeout);
-					timeout=null;
-				}
-				timeout = setTimeout(function(){
-					timeout=null;
-					f(nIteration);
-				},dtm);
-			}
-		};
-
-
-		Silk.init(ffMaxFreq(fPrintBody,100));
+		Silk.init(fPrintBody);
 	}
 );
 
