@@ -92,6 +92,7 @@
 			if (!(s in ascope)){
 				ascope[s] = new Scope("FOREACH:"+s,scope);
 				ascope[s].defvar(_.as, scope.expr("_.items['" + s + "']"));
+				ascope[s].defvar(_.as, _.items[s]);
 				ascope[s].defvar(_.indexby,s);
 				scopeInner.defvar(s,compile(ascope[s],jq.contents().clone()));
 			}

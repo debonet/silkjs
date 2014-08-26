@@ -129,6 +129,7 @@ Scope.prototype.expr = function(x){
 	var scope = this;
 
 	x=x.replace(/[\r\n]/g,' ');
+
 	return eval(
 		""
 			+ "(function(){\n"

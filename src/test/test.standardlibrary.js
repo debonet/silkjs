@@ -157,6 +157,19 @@ describe("standardlibrary", function(){
 		]);
 	});
 
+	it("should support object livevalues", function(){
+		fBulkCompare([
+			"<let a='{{ {b:1} }}'>{{_.a.b}}</let>",
+			"1",
+
+			"<let a='{{ [{b:1},{b:2},{b:3}] }}'>{{_.a[1].b}}</let>",
+			"2",
+
+
+
+		]);
+	});
+
 
 
 });

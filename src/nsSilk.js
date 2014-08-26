@@ -3,7 +3,7 @@
 var each = require("./each");
 var ffBind = require("./ffBind");
 var Scope = require("./Scope");
-
+var nsUtil = require("util");
 									 
 // ---------------------------------------------------------------------------
 var D = function(){
@@ -76,7 +76,11 @@ var fSafeSwapContents = function(jq, jqNewContents){
 var ffjqPassthrough = function(scope,jq){
 	return function(){
 		each(scope._._attributes, function(sVar){
-			jq.attr(sVar,scope._[sVar]);
+			var sVal = scope._[sVar];
+			if (sVal instanceof $){
+				sVal = sVal.text();
+			}
+			jq.attr(sVar, sVal);
 		});
 		fSafeSwapContents(jq, scope._._inner);
 		return jq;
@@ -270,14 +274,14 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 	}
 
 
-	return function(){
-		if (vx.length === 1 && !bForceJq){
-			var x=vx[0];
+	if (vx.length === 1 && !bForceJq){
+		var x=vx[0];
 
+		return function(){
 			if (typeof(x) === "function"){
 				x=x();
 			}
-
+			
 			if (x instanceof $){
 				// clone because variables can be used many times
 				return x.clone();
@@ -285,8 +289,10 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 			else{
 				return x;
 			}
-		}
+		};
+	};
 
+	return function(){
 		var ve=[];
 		each(vx,function(x){
 			if (typeof(x) === "function"){

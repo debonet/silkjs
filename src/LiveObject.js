@@ -53,7 +53,7 @@ Object.defineProperty(
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fCheckHonesty = function(){
 	var lo=this;
-	each(this.aAccessLayer, function(x,s){
+	each(Object.keys(this.aAccessLayer), function(s){
 		if (!(s in lo.alv)){
 			throw("ILLEGAL VARIABLE ASSIGNMENT TO ACCESSLAYER " + lo.sName + "."+ s);
 		}

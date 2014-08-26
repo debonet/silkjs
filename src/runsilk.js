@@ -11,8 +11,8 @@ var shtml = nsFs.readFileSync(sfl).toString();
 
 // just in case theres already a body in the script we're running
 // swap it out, run the stuff, and print the internal contents only
-shtml = shtml.replace("<body","<__page__");
-shtml = shtml.replace("</body","</__page__");
+shtml = shtml.replace("<body","<page");
+shtml = shtml.replace("</body","</page");
 
 fCreateDom(
 	"<body></body>",
@@ -24,10 +24,17 @@ fCreateDom(
 		$('body').append(Silk.parseHTML(shtml));
 		
 		var nIteration = 0;
+		var timeout;
 		var fPrintBody = function(err, jq){
-			console.log('---------------------------------------------------- Iteration ' + nIteration );
 			nIteration++;
-			console.log($("<div></div>").append(jq).html());
+			if (timeout){
+				clearTimeout(timeout);
+			}
+			timeout=setTimeout(function(){
+				console.log('---------------------------------------------------- Iteration ' + nIteration );
+				console.log($("<div></div>").append(jq).html());
+			}, 100);
+
 		};
 
 		Silk.init(fPrintBody);
