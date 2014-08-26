@@ -264,9 +264,11 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		n=aMatch["index"] + c;
 		vx.push(scope.expr(aMatch[1]));
 	};
-	if (n!==c){
-		vx.push(s.slice(n));	
+
+	if (n!==s.length){
+		vx.push(s.substr(n));	
 	}
+
 
 	return function(){
 		if (vx.length === 1 && !bForceJq){

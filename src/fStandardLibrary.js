@@ -1,6 +1,6 @@
+var Silk = require("./GlobalSilk");
 
-module.exports = function(Silk, scope){
-
+module.exports = function(scope){
 
 	var scopeInclude = new Silk.Scope("include");
 	scope.defelt("include", function(){

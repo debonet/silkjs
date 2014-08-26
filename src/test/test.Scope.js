@@ -7,38 +7,39 @@ var assert = require("assert");
 
 describe("Scope", function(){
 
-
-	it("should alscopew defvar values", function(){
+	it("should allow defvar values", function(){
 		var scope = new Scope();
 		scope.defvar("a",5);
 		assert.equal(scope._.a,5);
 	});
 
-
-	it("should not alscopew setting without defvar", function(){
+	it("should fail honesty check if setting without defvar", function(){
 		var scope = new Scope();
-		assert.throws(function(){
+		assert.doesNotThrow(function(){
 			scope._.a=5;
 		});
+		assert.throws(function(){
+			scope.loVariables.fCheckHonesty();
+		});
+
 	});
 
 
-
-
-	it("should alscopew setting after defvar", function(){
+	it("should allow setting after defvar", function(){
 		var scope = new Scope();
 		scope.defvar("a",5);
 		assert.doesNotThrow(function(){ scope._.a=7; });
 		assert.equal(scope._.a,7);
-		assert.throws(function(){ scope._.b=5; });
 	});
 
 
-	it("should alscopew setting after defvar", function(){
+	it("should allow setting after defvar", function(){
 		var scope = new Scope();
 		assert.equal(scope._.b,undefined);
-		assert.throws(function(){ scope._.b=4;	});
-		assert.equal(scope._.b,undefined);
+		assert.doesNotThrow(function(){ scope._.b=4;	});
+		assert.throws(function(){
+			scope.loVariables.fCheckHonesty();
+		});
 		scope.defvar("b",5);
 		assert.equal(scope._.b,5);
 		assert.doesNotThrow(function(){ scope._.b=6;	});

@@ -43,7 +43,7 @@
 	return function(){
 		var jqOut = $();
 		var n;
-		var c = _.times;
+		var c = Math.max(_.times,0);
 		var cAlloc = vscope.length;
 
 		// delete exess
@@ -53,10 +53,10 @@
 		}				
 
 		// make new ones, if needed
-		for (n=vscope.length; n<c; n++){
-		vscope[n] = new Scope("repeat"+n,scope);
-		vscope[n].defvar(_.indexby, n);
-		scopeInner.defvar(n, compile(vscope[n],jq.contents().clone()));
+		for (n=vscope.length; n < c; n++){
+			vscope[n] = new Scope("repeat"+n,scope);
+			vscope[n].defvar(_.indexby, n);
+			scopeInner.defvar(n, compile(vscope[n],jq.contents().clone()));
 		}
 
 		// eval and add

@@ -1,14 +1,9 @@
 var nsSilk = require("./nsSilk.js");
 var Scope = require("./Scope");
-var fStandardLibrary = require("./fStandardLibrary");
-
 var GlobalSilk={};
 
 // --------------------------------------------------------------------
 GlobalSilk.scope = new Scope("global");
-
-// --------------------------------------------------------------------
-GlobalSilk.fCallbackDigest = function(){console.log("callback")};
 
 // --------------------------------------------------------------------
 var cIteration = 0;
@@ -40,19 +35,29 @@ var ffOnDirty = function(fCallback){
 };
 
 // --------------------------------------------------------------------
-GlobalSilk.init = function(fCallback){
-	var jq=$('body').contents();
-
-	this.scope.defvar('_page',undefined,ffOnDirty(fCallback));
-	this.scope.getvar('_page');
-
-	fStandardLibrary(this, this.scope);
+GlobalSilk.fLoadStandardLibrary = function(scope,fCallback){
+	var fStandardLibrary = require("./fStandardLibrary");
+	fStandardLibrary(scope);
 
 	// TODO: we should compile stdlib.silk into a big comment at the end of this
 	// file so that we don't have to have an extra network lookup in a real
 	// deployemnt
 	GlobalSilk.fGet('standardlibrary.silk', function(err,sData){
-		nsSilk.compile(GlobalSilk.scope,Silk.parseHTML(sData))();
+		nsSilk.compile(scope,GlobalSilk.parseHTML(sData))();
+		fCallback(null);
+	});
+};
+
+
+// --------------------------------------------------------------------
+GlobalSilk.init = function(fCallback){
+	var jq=$('body').contents();
+
+	this.scope.defvar('_page',undefined,ffOnDirty(fCallback));
+	// force _page to be clean
+	this.scope.getvar('_page');
+
+	this.fLoadStandardLibrary(this.scope, function(err){
 		GlobalSilk.scope.setvar('_page', nsSilk.compile(GlobalSilk.scope, jq));
 		// no need to callback. _page will take care of it.
 	});
