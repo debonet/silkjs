@@ -15,16 +15,17 @@ module.exports = function(scope){
 					Silk.fGet(_.url, function(err,sData){
 						scopeInclude.setvar(
 							_.url, 
-							Silk.compile(scope.parent, Silk.parseHTML(sData))
+							Silk.parseHTML(sData)
 						);
 
-//						scope.parent.recompilevar('_inner');
-						console.log("RECOMPILE FOR",_.url);
-						Silk.scope.recompilevar('_inner');
+//						console.log("RECOMPILE", scope.parent.sName, "FOR", _.url);
+						scope.parent.recompilevar('_inner');
 					});
 				}
 
-				return scopeInclude.getvar(_.url);
+//				console.log("COMPILE", scope.parent.sName, "FOR", _.url);
+				return Silk.compile(scope.parent, scopeInclude.getvar(_.url))();
+
 			};
 		};
 	});

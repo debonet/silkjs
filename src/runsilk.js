@@ -45,7 +45,7 @@ fCreateDom(
 			timeout=setTimeout(function(){
 				console.log('---------------------------------------------------- Iteration ' + nIteration );
 				console.log($("<div></div>").append(jq).html());
-			}, 0);
+			}, 100);
 
 		};
 

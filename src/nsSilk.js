@@ -366,7 +366,6 @@ var ffjqEvalElements = function(scope, jq){
 
 
 	fOut.fRecompile = function(){
-		D("RECOMPILE");
 		return ffjqEvalElements(scope, jq);
 	};
 
