@@ -133,6 +133,18 @@ LiveObject.prototype.fDefineMutable = function(s,x,f){
 };
 
 // ---------------------------------------------------------------------------
+LiveObject.prototype.fRecompile = function(s){
+	if (s in this.alv){
+		this.alv[s].fRecompile();
+		return;
+	}
+	if (this.loParent){
+		return this.loParent.fRecompile(s);
+	}
+	D("RECOMPILE UNKNOWN VARIABLE ",this.sName,s);
+};
+
+// ---------------------------------------------------------------------------
 LiveObject.prototype.fDelete = function(s){
 	if (s in this.aAccessLayer){
 		delete this.alv[s];

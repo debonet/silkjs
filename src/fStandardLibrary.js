@@ -17,9 +17,13 @@ module.exports = function(scope){
 							_.url, 
 							Silk.compile(scope.parent, Silk.parseHTML(sData))
 						);
+
+//						scope.parent.recompilevar('_inner');
+						console.log("RECOMPILE FOR",_.url);
+						Silk.scope.recompilevar('_inner');
 					});
 				}
-					
+
 				return scopeInclude.getvar(_.url);
 			};
 		};

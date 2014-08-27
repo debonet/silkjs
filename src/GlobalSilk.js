@@ -19,8 +19,8 @@ var ffOnDirty = function(fCallback){
 
 			timeoutDraw = setTimeout(function(){
 				timeoutDraw = undefined;
-				var jq = Silk.scope._._page;
-				if (Silk.scope.loVariables.fbIsDirty("_page")){
+				var jq = Silk.scope._._inner;
+				if (Silk.scope.loVariables.fbIsDirty("_inner")){
 					return;
 				}
 
@@ -50,17 +50,22 @@ GlobalSilk.fLoadStandardLibrary = function(scope,fCallback){
 
 
 // --------------------------------------------------------------------
-GlobalSilk.init = function(fCallback){
+GlobalSilk.init = function(fRender, bSkipStdLib){
 	var jq=$('body').contents();
 
-	this.scope.defvar('_page',undefined,ffOnDirty(fCallback));
-	// force _page to be clean
-	this.scope.getvar('_page');
+	this.scope.defvar('_inner',undefined,ffOnDirty(fRender));
+	// force _inner to be clean
+	this.scope.getvar('_inner');
 
-	this.fLoadStandardLibrary(this.scope, function(err){
-		GlobalSilk.scope.setvar('_page', nsSilk.compile(GlobalSilk.scope, jq));
-		// no need to callback. _page will take care of it.
-	});
+	if (bSkipStdLib){
+		GlobalSilk.scope.setvar('_inner', nsSilk.compile(GlobalSilk.scope, jq));
+	}
+	else{
+		this.fLoadStandardLibrary(this.scope, function(err){
+			GlobalSilk.scope.setvar('_inner', nsSilk.compile(GlobalSilk.scope, jq));
+			// no need to callback. _inner will take care of it.
+		});
+	}
 };
 
 // --------------------------------------------------------------------
@@ -109,6 +114,7 @@ GlobalSilk.parseHTML = function(shtml){
 // --------------------------------------------------------------------
 GlobalSilk.setContents = nsSilk.fSafeSwapContents;
 GlobalSilk.compile = nsSilk.compile;
+GlobalSilk.expression = nsSilk.fLiveExpression;
 GlobalSilk.Scope = Scope;
 
 

@@ -9,6 +9,8 @@ var Scope = function(s, scopeParent){
 	this.scopeParent = scopeParent;
 
 	scopeParent = scopeParent || {};
+	this.vlvListeners = [];
+
 	this.loVariables  = new LiveObject(s + "(vars)", scopeParent.loVariables);
 	this.loElements   = new LiveObject(s + "(elt)", scopeParent.loElements);
 	this.loAttributes = new LiveObject(s + "(attr)", scopeParent.loAttributes);
@@ -25,6 +27,32 @@ Object.defineProperty(
 		get: function(){return this.scopeParent;}
 	}
 );
+
+
+// ---------------------------------------------------------------------------
+Scope.prototype.fDirty = function(){   
+    this.vlvListeners.forEach(function(lvListener){
+        lvListener.fDirty();
+    });
+};
+ 
+// ---------------------------------------------------------------------------
+Scope.prototype.fRemoveListener = function(lv){
+    this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
+};
+ 
+// ---------------------------------------------------------------------------
+Scope.prototype.fAddListener = function(lv){
+    this.vlvListeners.push(lv);
+};
+ 
+
+
+// variable methods
+Scope.prototype.recompilevar = function(s){
+	this.loVariables.fRecompile(s);
+};
+
 
 // variable methods
 Scope.prototype.defvar = function(s,x,f){
@@ -121,24 +149,6 @@ Scope.prototype.getattr = function(s){
 Scope.prototype.setattr = function(s,x){
 	return this.loAttributes.fSet(s,x);
 };
-
-
-
-// ---------------------------------------------------------------------------
-Scope.prototype.expr = function(x){
-	var scope = this;
-
-	x=x.replace(/[\r\n]/g,' ');
-
-	return eval(
-		""
-			+ "(function(){\n"
-			+ "  var _ = scope._;\n"
-			+ "  return " + x + ";\n"
-			+ "})"
-	);
-};
-
 
 
 

@@ -132,7 +132,7 @@ var fDefCode = function(scope,jq, sfDefine){
 	var afClosure = {};
 	each(aAttr, function(sVal, sVar){
 		// we allow the argument to be an expression
-		afClosure[sVar]=ffxInterpolateString(scope,sVal);//scope.expr(sVal);
+		afClosure[sVar]=ffxInterpolateString(scope,sVal);
 	});
 
 
@@ -181,7 +181,7 @@ var fDoInScope = function(scope,jq, sfDefine){
 	var afClosure = {};
 	each(aAttr, function(sVal, sVar){
 		// we allow the argument to be an expression
-		afClosure[sVar]=ffxInterpolateString(scope,sVal);//scope.expr(sVal);
+		afClosure[sVar]=ffxInterpolateString(scope,sVal);
 	});
 
 
@@ -247,11 +247,33 @@ var fDefMacro = function(scope, jq){
 				});
 				// make sure to clone contents as the macro can be called 
 				// multiple times
-				return compile(scopeIn, jq.contents().clone())();
+				return nsSilk.compile(scopeIn, jq.contents().clone())();
 			};
 		};
 	});
 };
+
+
+// ---------------------------------------------------------------------------
+var fLiveExpression = function(scope, x){
+
+	x=x.replace(/[\r\n]/g,' ');
+
+	return eval(
+		""
+			+ "(function(){\n"
+			+ "  var _ = scope._;\n"
+			+ "  try{\n"
+			+ "    return " + x + ";\n"
+			+ "  } catch(e){\n"
+			+ "    return '';\n"
+			+ "  } "
+			+ "})"
+	);
+};
+
+
+
 
 // ---------------------------------------------------------------------------
 var reInterpolate = /\{\{([\s\S]*?)\}\}/gm;
@@ -266,7 +288,7 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 			vx.push(s.slice(n,aMatch["index"]));
 		}
 		n=aMatch["index"] + c;
-		vx.push(scope.expr(aMatch[1]));
+		vx.push(fLiveExpression(scope,aMatch[1]));
 	};
 
 	if (n!==s.length){
@@ -322,7 +344,7 @@ var ffjqEvalTextElement = function(scope,jqScript){
 	return ffxInterpolateString(scope, jqScript.text(), true);
 };
 
-
+var LiveValue = require("./LiveValue");
 // ---------------------------------------------------------------------------
 var ffjqEvalElements = function(scope, jq){
 
@@ -334,7 +356,7 @@ var ffjqEvalElements = function(scope, jq){
 
 	var c=jq.length;
 
-	return function(){
+	var fOut = function(){
     var ve=[];
 		for (var n=0; n<c; n++){
       ve = ve.concat(scopeInner.getvar(n).get());
@@ -342,11 +364,14 @@ var ffjqEvalElements = function(scope, jq){
 		return $(ve);
 	};
 
+
+	fOut.fRecompile = function(){
+		D("RECOMPILE");
+		return ffjqEvalElements(scope, jq);
+	};
+
+	return fOut;
 };
-
-
-
-var compile = ffjqEvalElements;
 
 
 var afHandlerForElement = {
@@ -403,7 +428,6 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	// predeclare the _inner so that the element is bound
 	// to the _inner of its own scope
 	scope.defvar("_inner");
-	scope.defvar("_createInner");
 
 	var fjq  = ffjq(scope, jqScript);
 
@@ -421,13 +445,6 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		}
 	});
 
-	scope._._createInner = function(){
-		return function(scope){
-			return ffjqEvalElements(scope,jqScript.contents());
-		}
-	};
-
-	// quick alias for _._createInner(_);
 	scope._._inner = ffjqEvalElements(scope, jqScript.contents());
 
 	return function(){
@@ -445,37 +462,8 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 var nsSilk = {};
 
 // ---------------------------------------------------------------------------
-nsSilk.digest = function(scope, sVar, cIterations){
-	cIterations = cIterations || 10;
-
-	var x;
-	for (var n=0; n<cIterations; n++){
-		x = scope.getvar(sVar);
-		if (!scope.dirtyvar(sVar)){
-			break;
-		}
-		D("iterating..." + n + "/" + cIterations);
-	}	
-	if (scope.dirtyvar(sVar)){
-		console.warn("Reached " + cIterations + " giving up...");
-	}
-
-	return x;
-};
-
-// ---------------------------------------------------------------------------
 nsSilk.compile = ffjqEvalElements;
 nsSilk.fSafeSwapContents = fSafeSwapContents;
-
-// ---------------------------------------------------------------------------
-nsSilk.fjqSilkify = function(jqIn, scope, cIterations){
-	scope = scope || new Scope("global");
-	cIterations = cIterations || 10;
-
-	scope.defvar("_page", ffjqEvalElements(scope, jqIn));
-
-	return nsSilk.fjqRefresh(scope, cIterations);
-};
-
+nsSilk.fLiveExpression = fLiveExpression;
 
 module.exports = nsSilk;

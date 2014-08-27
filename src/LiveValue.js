@@ -73,9 +73,22 @@ LiveValue.prototype.fAddListener = function(lv){
 
 
 // ---------------------------------------------------------------------------
+LiveValue.prototype.fRecompile = function(){
+	if (!this._x.fRecompile){
+		D("NO RECOMPILE AVAILABLE");
+	}
+	else{
+		this._x = this._x.fRecompile(this._x);
+		this.fDirty();
+	}
+};
+
+
+// ---------------------------------------------------------------------------
 var kvlvDependsCache=[];
 var klvListeners = [];
 var cDepth = 0;
+
 LiveValue.prototype.fxGet = function(){
 
 	if(kvlvDependsCache.length && !this.bMutable){
