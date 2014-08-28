@@ -50,7 +50,7 @@ describe("Scope", function(){
 	it("expr should work", function(){
 		var scope = new Scope("testexpr");
 		scope.defvar("a",5);
-		scope.defvar("b",scope.expr("_.a+2"));
+		scope.defvar("b",function(){return scope._.a+2;});
 		assert.equal(scope._.b,7);
 		scope._.a = 2;
 		assert.equal(scope._.b,4);
@@ -61,7 +61,7 @@ describe("Scope", function(){
 		var scope = new Scope("yesper");
 		scope.defmutable("a",5);
 
-		scope.defvar("b",scope.expr("_.a+2"));
+		scope.defvar("b",function(){return scope._.a+2;});
 		assert.equal(scope._.b,7);
 		scope._.a = 2;
 		assert.equal(scope._.b,7);

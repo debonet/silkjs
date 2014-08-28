@@ -1,8 +1,5 @@
 // ---------------------------------------------------------------------------
-var D = function(){
-  Function.apply.call(console.log, console, arguments);
-};
-
+var D = require("./fDebugOutput");
 var each = require("./each");
 var LiveValue = require("./LiveValue");
 var ffBind = require("./ffBind");

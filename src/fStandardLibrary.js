@@ -1,11 +1,14 @@
 var Silk = require("./GlobalSilk");
+var D = require("./fDebugOutput");
 
 module.exports = function(scope){
 
 	var scopeInclude = new Silk.Scope("include");
 	scope.defelt("include", function(){
+
 		return function(scope,jq){
 
+			var fCompile;
 			return function(){
 				var _ = scope._;
 
@@ -18,13 +21,19 @@ module.exports = function(scope){
 							Silk.parseHTML(sData)
 						);
 
-//						console.log("RECOMPILE", scope.parent.sName, "FOR", _.url);
+						fCompile = null;
 						scope.parent.recompilevar('_inner');
 					});
 				}
 
-//				console.log("COMPILE", scope.parent.sName, "FOR", _.url);
-				return Silk.compile(scope.parent, scopeInclude.getvar(_.url))();
+				if (!fCompile){
+					fCompile = Silk.compile(
+						scope.parent, 
+						scopeInclude.getvar(_.url).clone()
+					);
+				}
+				return fCompile();
+
 
 			};
 		};

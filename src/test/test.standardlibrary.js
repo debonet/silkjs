@@ -1,4 +1,4 @@
-var Silk = require("../GlobalSilk");
+global.Silk = require("../GlobalSilk");
 var nsSilk = require("../nsSilk");
 var Scope = require("../Scope");
 var assert = require("assert");

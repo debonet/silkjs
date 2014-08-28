@@ -4,28 +4,8 @@ var each = require("./each");
 var ffBind = require("./ffBind");
 var Scope = require("./Scope");
 var nsUtil = require("util");
+var D = require("./fDebugOutput");
 									 
-// ---------------------------------------------------------------------------
-var D = function(){
-	var vxArg = Array.prototype.slice.call(arguments);
-
-	each(vxArg, function(xArg,n){
-		if (typeof(xArg) === 'object' && xArg instanceof $){
-			var jq = xArg;
-			var s="jquery [";
-			jq.each(function(ne,e){
-				s+="\n\t" + ne + " -> " + $("<div />").append($(e).clone()).html();
-			});
-			s+= "]";
-			vxArg[n] = s;
-		}
-	});
-
-  Function.apply.call(console.log, console, vxArg);
-};
-
-
-
 // ---------------------------------------------------------------------------
 var fCopyAttributes = function(jqTo, jqFrom){
 	// copy attributes
@@ -266,7 +246,6 @@ var fLiveExpression = function(scope, x){
 			+ "  try{\n"
 			+ "    return " + x + ";\n"
 			+ "  } catch(e){\n"
-			+ "    D('error in " + x + "' + e);\n"
 			+ "    return '';\n"
 			+ "  } "
 			+ "})"
