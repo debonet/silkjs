@@ -266,6 +266,7 @@ var fLiveExpression = function(scope, x){
 			+ "  try{\n"
 			+ "    return " + x + ";\n"
 			+ "  } catch(e){\n"
+			+ "    D('error in " + x + "' + e);\n"
 			+ "    return '';\n"
 			+ "  } "
 			+ "})"

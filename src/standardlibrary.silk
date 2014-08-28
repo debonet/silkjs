@@ -34,6 +34,36 @@
 	};
 </defelt>
 
+<!-- nbl (NoBlankLines) -->
+<defattr name="nbl">
+	var f= function(jqInstance){
+		var ve=[];
+		var bGotCR = true;
+		each(jqInstance, function(jqSub){
+
+			for (var n=0,c=jqSub.length; n < c; n++){
+				var e = jqSub.get(n);
+				if (e.nodeType === 3){
+					e.nodeValue = e.nodeValue.replace(/[ \t\r\n\s]+[\r\n]/g,'\n');
+					if (e.nodeValue.match(/^[^\S]*$/)){
+						if (bGotCR){
+							e.nodeValue='';
+						}
+						bGotCR = true;
+					}
+				}
+				else{
+					bGotCR = false;
+					f($(e).contents());
+				}
+			}
+		});
+		return jqInstance;
+	};
+
+	return f;
+</defattr>
+
 
 <!-- repeat element -->
 <defelt name="repeat" times="0" indexby="_index">
@@ -113,7 +143,9 @@
 <defattr name="click">
 	return function(jqInstance){
 		jqInstance.on("click", function(){
+			D("EVALING",_.click);
 			eval(_.click);
+			D(jqInstance);
 		});
 		
 		return jqInstance;

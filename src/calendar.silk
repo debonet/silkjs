@@ -1,0 +1,216 @@
+<let nbl adddialog="{{true}}">
+
+	<defmacro name="mytable">
+		<let myinner="{{_._inner}}"><a>{{_.myinner}}</a></let>
+	</defmacro>
+
+	<!-- -------------------------------------- -->
+	<defun name="fcDaysInMonth">
+		return function(tm){
+			var date = new Date(tm);
+			return new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
+	<defun name="fcFirstDOWOfMonth">
+		return function(tm){
+			console.log("hmm",tm);
+			var date = new Date(tm);
+			return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
+	<defun name="ftmFromS">
+		return function(s){
+			return  Date.parse(s);
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
+	<defun name="ftmShiftByDays">
+		return function(tm, cDays){
+			return new Date(tm + 24*60*60*1000 * cDays).getTime();
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
+	<defun name="fsTimeForTm">
+		return function(tm){
+			var date = new Date(tm);
+			return (
+				""
+				+	((date.getHours()-1)%12+1)
+				+ ":"
+				+ (date.getMinutes() < 10?"0":"")
+				+ date.getMinutes() 
+				+ (date.getHours() < 12 ? "am" : "pm")
+			);
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
+	<defun name="faFilterByDate">
+		// TODO: put real iCal interpreter here, recurrence rules, etc.
+	return function(vaEvents, tmStart, tmEnd){
+		var vaOut = [];
+		each(vaEvents,function(aEvent){
+			if (!("tm" in aEvent)){
+				aEvent.tm = _.ftmFromS(aEvent.stm);
+				D(aEvent);
+			}
+			if (aEvent.tm > tmStart && aEvent.tm < tmEnd){
+				vaOut.push(aEvent);
+			}
+		});
+		vaOut.sort(function(a1,a2){
+			return a1.tm-a2.tm;
+		});
+		return vaOut;
+		}
+
+	</defun>
+
+
+
+	<!-- -------------------------------------- -->
+	<defmacro name="monthlyview" tm="" events="{{ [] }}">
+
+		<defmacro name="monthviewdayblank">
+			<div class="monthly-cell blank"></div>
+		</defmacro>
+		
+		<defmacro name="monthviewday" day="" events="{{[]}}">
+			<div class="monthly-cell">
+				{{_.day}}
+				<foreach items="{{_.events}}" as="event">
+					<div>
+						{{_.fsTimeForTm(_.event["tm"])}} - {{_.event["summary"]}}
+					</div>
+				</foreach>
+			</div>
+		</defmacro>
+		
+		
+		
+		<let
+				startdow="{{_.fcFirstDOWOfMonth(_.tm)}}"
+				days="{{_.fcDaysInMonth(_.tm)}}"
+			>
+			<let weeks="{{ Math.ceil((_.startdow + _.days)/7) }}">
+				<div class="monthly">
+					<repeat times="{{_.weeks}}" indexby="week">
+						<div class="monthly-row">
+							<repeat times="7" indexby="dow">
+								<let 
+										calbox="{{_.week * 7 + _.dow}}"
+										day="{{_.week * 7 + _.dow - _.startdow + 1}}"
+									>
+									<switch>
+ 										<case test="{{ _.calbox &lt; _.startdow}}">
+											<monthviewdayblank></monthviewdayblank>
+										</case>
+										<case test="{{ _.calbox &gt;= (_.days + _.startdow)}}">
+											<monthviewdayblank></monthviewdayblank>
+										</case>
+										<case>
+											<monthviewday 
+													events="{{ _.faFilterByDate(
+													_.events, 
+													_.ftmShiftByDays(_.tm,_.day-1),	
+													_.ftmShiftByDays(_.tm,_.day) 
+													) }}"
+													day="{{_.day}}"
+												>
+											</monthviewday>
+										</case>
+
+									</switch>
+								</let>
+							</repeat>
+						</div>
+					</repeat>
+				</div>
+			</let>
+		</let>
+	</defmacro>
+
+
+
+	<!-- -------------------------------------- -->
+	<defmacro name="dialog" openwhen="">
+		<if test="{{_.on}}">
+			<div class="dialog">
+				{{_._inner}}
+			</div>
+		</if>
+	</defmacro>
+
+	<!-- -------------------------------------- -->
+	<dialog openwhen="{{_.adddialog}}>
+		Add New Event
+		Date: <input model="date">
+		<br/>
+		Summary <input model="summary">
+	</dialog>
+
+{{_.adddialog}}
+	
+	<style>
+	 .dialog {
+		 position: fixed;
+		 z-index:1000;
+		 background: #f00;
+		 top: 10%;
+		 left: 20%;
+		 width: 80%;
+	 }
+
+	 .monthly-cell {
+		 display: inline-block;
+		 width: 100%;
+		 max-width: 14%;
+		 height: 5em;
+		 border-top: 1px solid black;
+		 border-left: 1px solid black;
+		 overflow: hidden;
+		 white-space: nowrap;
+		 text-overflow: ellipsis;
+		 font-size:20px;
+	 }
+	 .monthly {
+		 font-size:0px;
+	 }
+	 .monthly-row {
+	 }
+	 .monthly-cell div {
+		 font-size:12px;
+	 }
+	 
+	 .monthly-cell.blank {
+		 background:#ddd;
+	 }
+	</style>
+
+
+	<defun name="events">
+		return [
+			{
+				stm: "2014-8-1 08:00:00",
+				summary: "planning meeting"
+			},
+			{
+				stm: "2014-8-3 12:00:00",
+				summary: "lunch with joe"
+			}
+		];
+	</defun>
+
+	
+	<monthlyview tm="{{_.ftmFromS('8/1/2014')}}" events="{{_.events}}">
+	</monthlyview>
+
+
+
+</let>
