@@ -280,7 +280,7 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		vx.push(s.substr(n));	
 	}
 
-
+ 
 	if (vx.length === 1){
 		if (typeof(vx[0]) === "function"){
 			return function(){
@@ -295,9 +295,8 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 				}
 			};
 		}
-		return bForceJq?fjqText(x):""+x;
+		return bForceJq?fjqText(vx[0]):""+vx[0];
 	}
-
 
 	return function(){
 		var ve=[];
@@ -309,7 +308,7 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 			if (x instanceof $){
 				// clone because variables can be used many times
 				if (s.length){
-					ve = ve.concat(fjqText(s));
+					ve = ve.concat(fjqText(s).get());
 					s="";
 				}
 				ve = ve.concat(x.clone().get());
@@ -324,7 +323,7 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		}
 
 		if (s.length){
-			ve = ve.concat(fjqText(s));
+			ve = ve.concat(fjqText(s).get());
 		}
 
 		return $(ve);
@@ -384,9 +383,6 @@ var afHandlerForElement = {
 
 
 // ---------------------------------------------------------------------------
-var c=0;
-var fNow = require("performance-now");
-var tm=fNow();
 var ffjqCompileElement = function(scopeIn,jqScript){
 	var nNodeType = jqScript.get()[0].nodeType;
 
