@@ -26,12 +26,15 @@ var shtml = nsFs.readFileSync(sfl).toString();
 shtml = shtml.replace("<body","<page");
 shtml = shtml.replace("</body","</page");
 
+
 fCreateDom(
 	"<body></body>",
 	function(err, window){
 		// this needs to be the global.$ because we're simulating
 		// the browsers version of window.$
 		global.$ = require('jquery')(window);
+		global.window = window;
+		global.document = window.document;
 
 		$('body').append(Silk.parseHTML(shtml));
 		

@@ -5,16 +5,6 @@ var ffBind = require("./ffBind");
 var Scope = require("./Scope");
 var nsUtil = require("util");
 var D = require("./fDebugOutput");
-									 
-// ---------------------------------------------------------------------------
-var fCopyAttributes = function(jqTo, jqFrom){
-	// copy attributes
-	each(jqFrom.prop("attributes"), function(aAttr){
-		var sAttr = aAttr["name"];
-		var sVal = aAttr["value"];
-		jqTo.attr(sVar, sVal);
-	});
-};
 
 // ---------------------------------------------------------------------------
 var faAttributes = function(jq){
@@ -35,6 +25,8 @@ var faAttributes = function(jq){
 };
 
 
+									 
+// ---------------------------------------------------------------------------
 // this tricky bit makes sure we don't remove/detach
 // node which we still need. detach and reattach
 // loses focus. remove wipes handlers
@@ -55,6 +47,7 @@ var fSafeSwapContents = function(jq, jqNewContents){
 // ---------------------------------------------------------------------------
 var ffjqPassthrough = function(scope,jq){
 	return function(){
+
 		each(scope._._attributes, function(sVar){
 			var sVal = scope._[sVar];
 			if (sVal instanceof $){
@@ -62,7 +55,10 @@ var ffjqPassthrough = function(scope,jq){
 			}
 			jq.attr(sVar, sVal);
 		});
-		fSafeSwapContents(jq, scope._._inner);
+
+		var jqInner = scope._._inner;
+		fSafeSwapContents(jq, jqInner);
+
 		return jq;
 	}
 };
@@ -256,8 +252,17 @@ var fLiveExpression = function(scope, x){
 
 
 // ---------------------------------------------------------------------------
+var fjqText = function(s){
+	return Silk.parseHTML(s);
+};
+
 var reInterpolate = /\{\{([\s\S]*?)\}\}/gm;
 var ffxInterpolateString = function(scope,s,bForceJq){
+		
+	if (s.indexOf("{{")===-1){
+		return bForceJq?fjqText(s):s;
+	}
+
 	var aMatch;
 	var vx=[];
 	var n = 0;
@@ -276,44 +281,51 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 	}
 
 
-	if (vx.length === 1 && !bForceJq){
-		var x=vx[0];
-
-		return function(){
-			if (typeof(x) === "function"){
-				x=x();
-			}
+	if (vx.length === 1){
+		if (typeof(vx[0]) === "function"){
+			return function(){
+				var x=vx[0]();
 			
-			if (x instanceof $){
-				// clone because variables can be used many times
-				return x.clone();
-			}
-			else{
-				return x;
-			}
-		};
-	};
+				if (x instanceof $){
+					// clone because variables can be used many times
+					return x.clone();
+				}
+				else{
+					return bForceJq?fjqText(x):x;
+				}
+			};
+		}
+		return bForceJq?fjqText(x):""+x;
+	}
+
 
 	return function(){
 		var ve=[];
+		s="";
 		each(vx,function(x){
 			if (typeof(x) === "function"){
 				x=x();
-			}
+ 			}
 			if (x instanceof $){
 				// clone because variables can be used many times
+				if (s.length){
+					ve = ve.concat(fjqText(s));
+					s="";
+				}
 				ve = ve.concat(x.clone().get());
 			}
 			else{
-				x=x+"";
-				x=x.replace(/\\\n/g,"");
-				x=x.replace(/\\\t+/g,"");
-				// for some reason $.parseHTML does not like ""
-				if (x.length){
-					ve = ve.concat($.parseHTML(x));
-				}
+				s+=x;
 			}
 		});
+
+		if (ve.length===0){
+			return bForceJq?fjqText(s):s;
+		}
+
+		if (s.length){
+			ve = ve.concat(fjqText(s));
+		}
 
 		return $(ve);
 	}
@@ -321,17 +333,22 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 
 // ---------------------------------------------------------------------------
 var ffjqEvalTextElement = function(scope,jqScript){
-	return ffxInterpolateString(scope, jqScript.text(), true);
+	var s = jqScript.text();
+	if (s.indexOf("{{")===-1){
+		return jqScript;
+	}
+	return ffxInterpolateString(scope, s, true);
 };
 
-var LiveValue = require("./LiveValue");
 // ---------------------------------------------------------------------------
-var ffjqEvalElements = function(scope, jq){
+var ffjqCompileElements = function(scope, jq){
 
-	var scopeInner = new Scope(scope.sName+":INNER" + Math.floor(Math.random()*1000));
+	var scopeInner = new Scope(
+		scope.sName+":INNER" + Math.floor(Math.random()*1000)
+	);
 
 	each(jq.get(),function(e,n){
-		scopeInner.defvar(n,ffjqEvalElement(scope, $(e)));
+		scopeInner.defvar(n,ffjqCompileElement(scope, $(e)));
 	});
 
 	var c=jq.length;
@@ -346,13 +363,17 @@ var ffjqEvalElements = function(scope, jq){
 
 
 	fOut.fRecompile = function(){
-		return ffjqEvalElements(scope, jq);
+		return ffjqCompileElements(scope, jq);
 	};
 
 	return fOut;
 };
 
 
+
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 var afHandlerForElement = {
 	"defelt"   : fDefElement,
 	"defattr"  : fDefAttribute,
@@ -361,20 +382,25 @@ var afHandlerForElement = {
 	"run"      : fDoInScope
 };
 
+
 // ---------------------------------------------------------------------------
-var ffjqEvalElement = function(scopeIn,jqScript){
+var c=0;
+var fNow = require("performance-now");
+var tm=fNow();
+var ffjqCompileElement = function(scopeIn,jqScript){
 	var nNodeType = jqScript.get()[0].nodeType;
-	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
 
 	// comments and empty
 	if (nNodeType === 8 || jqScript.length === 0){
-		return function(){return $();};
+		return $();
 	}
 
 	// text
 	if (nNodeType === 3){
 		return ffjqEvalTextElement(scopeIn, jqScript);
 	}
+
+	var sElement  = (jqScript.prop('tagName')+"").toLowerCase();
 
 	// handle scripts or remap them
 	if (sElement === "script"){
@@ -383,7 +409,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 			sElement = sType;
 		}
 		else{
-			return function(){return jqScript;};
+			return jqScript;
 		}
 	}
 	
@@ -391,7 +417,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	var fHandler = afHandlerForElement[sElement];
 	if (fHandler){
 		fHandler(scopeIn,jqScript);
-		return function(){return $();};
+		return $();
 	}
 
 	// elements
@@ -411,12 +437,11 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 	var fjq  = ffjq(scope, jqScript);
 
 	var aAttr = faAttributes(jqScript);
-	scope.defvar("_element",sElement);
+	scope.defvar("_attributes",Object.keys(aAttr));
 	each(aAttr, function(sVal, sVar){
 		scope.defvar(sVar, ffxInterpolateString(scopeIn,sVal));
 	});
-	scope.defvar("_attributes",Object.keys(aAttr));
-
+	
 	var vfjqChange = [];
 	each(aAttr, function(sVal, sVar){
 		if (scopeIn.checkattr(sVar)){
@@ -424,7 +449,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 		}
 	});
 
-	scope._._inner = ffjqEvalElements(scope, jqScript.contents());
+	scope._._inner = ffjqCompileElements(scope, jqScript.contents());
 
 	return function(){
 		var jq=fjq();
@@ -441,7 +466,7 @@ var ffjqEvalElement = function(scopeIn,jqScript){
 var nsSilk = {};
 
 // ---------------------------------------------------------------------------
-nsSilk.compile = ffjqEvalElements;
+nsSilk.compile = ffjqCompileElements;
 nsSilk.fSafeSwapContents = fSafeSwapContents;
 nsSilk.fLiveExpression = fLiveExpression;
 

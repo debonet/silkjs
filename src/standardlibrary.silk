@@ -98,9 +98,8 @@
 	};
 </defelt>
 
-
 <!-- foreach element -->
-<defelt scope="_" name="foreach" items="{{[]}}" as="_item" indexby="_index">
+<defelt name="foreach" items="{{[]}}" as="_item" indexby="_index">
 	var ascope = {};
 	var scopeInner = new Scope();
 

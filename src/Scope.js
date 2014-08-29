@@ -4,13 +4,12 @@ var each = require("./each");
 var ffBind = require("./ffBind");
 var LiveObject = require("./LiveObject");
 
-var Scope = function(s, scopeParent){
+var Scope = function(s, scopeParent, bVarOnly){
 	this.sName=s;
 	this.scopeParent = scopeParent;
-
-	scopeParent = scopeParent || {};
 	this.vlvListeners = [];
 
+	scopeParent = scopeParent || {};
 	this.loVariables  = new LiveObject(s + "(vars)", scopeParent.loVariables);
 	this.loElements   = new LiveObject(s + "(elt)", scopeParent.loElements);
 	this.loAttributes = new LiveObject(s + "(attr)", scopeParent.loAttributes);
@@ -31,9 +30,9 @@ Object.defineProperty(
 
 // ---------------------------------------------------------------------------
 Scope.prototype.fDirty = function(){   
-    this.vlvListeners.forEach(function(lvListener){
-        lvListener.fDirty();
-    });
+  this.vlvListeners.forEach(function(lvListener){
+    lvListener.fDirty();
+  });
 };
  
 // ---------------------------------------------------------------------------

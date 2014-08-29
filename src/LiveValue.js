@@ -88,7 +88,6 @@ var klvListeners = [];
 var cDepth = 0;
 
 LiveValue.prototype.fxGet = function(){
-
 	if(kvlvDependsCache.length && !this.bMutable){
 		var c = kvlvDependsCache.length;
 		kvlvDependsCache[c-1].push(this);
