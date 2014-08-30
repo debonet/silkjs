@@ -31,17 +31,62 @@ var faAttributes = function(jq){
 // node which we still need. detach and reattach
 // loses focus. remove wipes handlers
 var fSafeSwapContents = function(jq, jqNewContents){
-	jq.append(jqNewContents);
 
 	var veNew = jqNewContents.get();
 	var jqOld = jq.contents();
 	var veOld = jqOld.get();
+
+	var jqFocus = jqNewContents.find(":focus");
+
+
+	var nNew =0;
+	for (var nOld=0, cOld=veOld.length; nOld<cOld; nOld++){
+		if (veOld[nOld] !== veNew[nNew]){
+			if (veNew.indexOf(veOld[nOld]) === -1){
+				$(veOld[nOld]).remove();
+			}
+			// else somehow changed position
+		}
+		else{
+			nNew++;
+		}
+	}
+	for (var  cNew=veNew.length; nNew<cNew; nNew++){
+		jq.append($(veNew[nNew]));
+	}
+	
+/*
+	if (jqFocus.length){
+		var eFocus = jqFocus.get(0);
+
+		var nFocus = -1;
+		for (var nNew=0, cNew=veNew.length; nNew<cNew; nNew++){
+			if (eFocus === veNew[nNew]){
+				nFocus=nNew;
+			}
+		}
+
+		for (nNew=nFocus-1;  nNew>=0; nNew--){
+			D("APPEND!");
+			jq.prepend($(veNew[nNew]));
+		}
+		for (nNew=nFocus+1;  nNew<cNew; nNew++){
+			D("APPEND!");
+			jq.append($(veNew[nNew]));
+		}
+	}
+	else{
+		jq.append(jqNewContents);
+	}
 
 	for (var nOld=0, cOld=veOld.length; nOld<cOld; nOld++){
 		if (veNew.indexOf(veOld[nOld]) === -1){
 			$(veOld[nOld]).remove();
 		}
 	}
+	jqFocus.focus();
+*/
+
 };
 
 // ---------------------------------------------------------------------------
@@ -223,7 +268,7 @@ var fDefMacro = function(scope, jq){
 				});
 				// make sure to clone contents as the macro can be called 
 				// multiple times
-				return nsSilk.compile(scopeIn, jq.contents().clone())();
+				return nsSilk.compile(scopeIn, jq.contents().clone(true))();
 			};
 		};
 	});
@@ -234,6 +279,22 @@ var fDefMacro = function(scope, jq){
 var fLiveExpression = function(scope, x){
 
 	x=x.replace(/[\r\n]/g,' ');
+	
+	try{
+		var f = new Function("return " + x);
+		try{
+			var x=f();
+			// not live!
+//			D("NOT LIVE",x,x instanceof Array);
+			return x;
+		}
+		catch(e){
+			// is live
+		}
+	}
+	catch(e){
+		throw("Syntax error in expression:" + x);
+	}
 
 	return eval(
 		""
@@ -288,14 +349,14 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 			
 				if (x instanceof $){
 					// clone because variables can be used many times
-					return x.clone();
+					return x.clone(true);
 				}
 				else{
 					return bForceJq?fjqText(x):x;
 				}
 			};
 		}
-		return bForceJq?fjqText(vx[0]):""+vx[0];
+		return bForceJq?fjqText(vx[0]):vx[0];
 	}
 
 	return function(){
@@ -311,7 +372,7 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 					ve = ve.concat(fjqText(s).get());
 					s="";
 				}
-				ve = ve.concat(x.clone().get());
+				ve = ve.concat(x.clone(true).get());
 			}
 			else{
 				s+=x;
@@ -408,6 +469,7 @@ var ffjqCompileElement = function(scopeIn,jqScript){
 			return jqScript;
 		}
 	}
+//	D("COMPILE",sElement);
 	
 	// check if it has a special handler
 	var fHandler = afHandlerForElement[sElement];

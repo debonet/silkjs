@@ -142,11 +142,10 @@
 <defattr name="click">
 	return function(jqInstance){
 		jqInstance.on("click", function(){
-			D("EVALING",_.click);
 			eval(_.click);
-			D(jqInstance);
 		});
 		
+		jqInstance.attr("clickbound","yes");
 		return jqInstance;
 	}
 </defattr>
@@ -162,16 +161,18 @@
 <!-- model link between input and data -->
 <defattr name="model" parse="{{_.__identity__}}" format="{{_.__identity__}}">
 	return function(jqInstance){
-		jq.val(_.format(scope._[_.model]));
-		
-		if (!jqInstance.data("sk-model")){
-			jqInstance.on("input", function(){
-				scope.setvar(_.model, _.parse($(this).val()));
-				jqInstance.focus();
-			});
-			jqInstance.data("sk-model", true);
+		// only work on input elements, as defined by jQuery's :input selector
+		if ((jq.filter(":input")).length){
+			D("DOING MODEL");
+//			jq.val(_.format(scope._[_.model]));
+			if (!jqInstance.data("sk-model")){
+				jqInstance.on("input", function(){
+					scope.setvar(_.model, _.parse($(this).val()));
+					jqInstance.focus();
+				});
+				jqInstance.data("sk-model", true);
+			}
 		}
-		
 		return jqInstance;
 	}
 </defattr>

@@ -1,4 +1,4 @@
-<let nbl adddialog="{{true}}">
+<let xnbl adddialog="{{false}}">
 
 	<defmacro name="mytable">
 		<let myinner="{{_._inner}}"><a>{{_.myinner}}</a></let>
@@ -53,6 +53,7 @@
 	<defun name="faFilterByDate">
 		// TODO: put real iCal interpreter here, recurrence rules, etc.
 	return function(vaEvents, tmStart, tmEnd){
+
 		var vaOut = [];
 		each(vaEvents,function(aEvent){
 			if (!("tm" in aEvent)){
@@ -145,10 +146,12 @@
 					var calbox = week * 7 + dow;
 					var day = week * 7 + dow - startdow + 1;
 
-					if (calbox &lt; startdow){
-						jqRow.append($('<div class="monthly-cell blank"></div>'));
+					if (calbox < startdow){
+						jqRow.append($('<div class="monthly-cell blank"></div>').append(
+							JSON.stringify(_.events)
+						));
 					}
-					else if (calbox &gt;= days + startdow){
+					else if (calbox >= days + startdow){
 						jqRow.append($('<div class="monthly-cell blank"></div>'));
 					}
 					else {
@@ -157,7 +160,8 @@
 							_.ftmShiftByDays(_.tm, day-1),	
 							_.ftmShiftByDays(_.tm, day) 
 						);
-						var jqCell=	$('<div class="monthly-cell" click="_.adddialog = true">' + day + '</div>');
+						var jqCell=	$('<div class="monthly-cell">' + day + '</div>');
+						jqCell.on('click',function(){_.adddialog = true;});
 						each(eventsDay, function(event){
 							jqCell.append(
 								'<div>' 
@@ -175,21 +179,57 @@
 	</defelt>
 		
 	<!-- -------------------------------------- -->
-	<defmacro name="dialog" openwhen="">
-		<if test="{{eval(_.openwhen)}}" myinner="_._inner">
+	<defmacro name="dialog" model="">
+		<if test="{{_[_.model]}}" myinner="{{_._inner}}">
 			<div class="dialog">
+				<div class="close" click="_[_.model]=false">X</div>
 				{{_.myinner}}
 			</div>
 		</if>
 	</defmacro>
 
 	<!-- -------------------------------------- -->
-	<dialog openwhen="{{_.adddialog}}>
-		Add New Event
-		Date: <input model="date">
-		<br/>
-		Summary <input model="summary">
-	</dialog>
+	<defelt name="dynamic" element="div">
+		D("COMPILE GENERATE DYNAMIC");
+		return function(){
+			var jqOut = $("<" + _.element + "></" + _.element + ">");
+			each(_._attributes,function(s){
+				if (s!=="element"){
+					jqOut.attr(s,_[s]);
+				}
+			});
+			jqOut.append(_._inner);
+		  D("GENERATE DYNAMIC");
+			return Silk.compile(scope,jqOut)();
+		}
+	</defelt>
+
+	<!-- -------------------------------------- -->
+	<defattr name="passattr">
+		return function(jqInstance){
+			var vs=_.passattr;
+			if (vs instanceof String){
+				vs=vs.split(/[\s,]+/);
+			}
+			each(vs, function(s){
+				jqInstance.attr(s,_[s]);
+			});
+			jqInstance.attr("passattr",null);
+			return jqInstance;
+		}
+	</defattr>
+	
+	<!-- -------------------------------------- -->
+	<defmacro name="question" label="" element="input">
+		<div passattr="class, style">
+			<div>
+				{{_.label}}
+			</div>
+			<div>
+				<dynamic element="{{_.element}}" model="{{_.model}}"></dynamic>
+			</div>
+		</div>
+	</defmacro>
 
 
 	<style>
@@ -199,7 +239,7 @@
 		 background: #f00;
 		 top: 10%;
 		 left: 20%;
-		 width: 80%;
+		 width: 60%;
 	 }
 
 	 .monthly-cell {
@@ -229,8 +269,8 @@
 	</style>
 
 
-	<defun name="events">
-		return [
+	<let events='{{
+		[
 			{
 				stm: "2014-8-1 08:00:00",
 				summary: "planning meeting"
@@ -239,13 +279,25 @@
 				stm: "2014-8-3 12:00:00",
 				summary: "lunch with joe"
 			}
-		];
-	</defun>
+		]
+			}}'
+		>
 
-	
 	<monthlyview2 tm="{{_.ftmFromS('8/1/2014')}}" events="{{_.events}}">
 	</monthlyview2>
 
 
+	<!-- -------------------------------------- -->
+	<dialog model="adddialog">
+		<let date="" summary="">
+			Add New Event
+			<question label="Date" model="date"></question>
+			<question label="Description" model="summary"></question>
+			<button click="_.events.push({stm:_.date,summary:_.summary}); D('click')">
+				OK
+			</button>
+		</let>
+	</dialog>
 
+	</let>
 </let>

@@ -30,8 +30,19 @@ LiveValue.prototype.fSet = function(x){
 	if(this._x !== x){
 		this.fDirty();
 		this._x = x;
+		var lv = this;
+		if (x instanceof Array){
+			['push','pop','shift','unshift'].forEach(function(sf){
+				x[sf] = function(){
+					D("MYPUSH!");
+					lv.fDirty();
+					Array.prototype[sf].apply(this,arguments);
+				};
+			});
+		}
 	}
-}
+};
+
 
 
 // ---------------------------------------------------------------------------

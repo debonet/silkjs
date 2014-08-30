@@ -4,11 +4,11 @@ var D = require("./fDebugOutput");
 module.exports = function(scope){
 
 	var scopeInclude = new Silk.Scope("include");
+
+	// ------------------------------------------------------------------------
 	scope.defelt("include", function(){
-
 		return function(scope,jq){
-
-			var fCompile;
+			var fjq;
 			return function(){
 				var _ = scope._;
 
@@ -21,20 +21,19 @@ module.exports = function(scope){
 							Silk.parseHTML(sData)
 						);
 
-						fCompile = null;
+						fjq = null;
 						scope.parent.recompilevar('_inner');
+
 					});
 				}
-
-				if (!fCompile){
-					fCompile = Silk.compile(
+				if (!fjq){
+					fjq = Silk.compile(
 						scope.parent, 
 						scopeInclude.getvar(_.url).clone()
 					);
 				}
-				return fCompile();
 
-
+				return fjq();
 			};
 		};
 	});
