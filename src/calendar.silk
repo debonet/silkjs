@@ -15,7 +15,6 @@
 	<!-- -------------------------------------- -->
 	<defun name="fcFirstDOWOfMonth">
 		return function(tm){
-			console.log("hmm",tm);
 			var date = new Date(tm);
 			return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 		}
@@ -58,7 +57,6 @@
 		each(vaEvents,function(aEvent){
 			if (!("tm" in aEvent)){
 				aEvent.tm = _.ftmFromS(aEvent.stm);
-				D(aEvent);
 			}
 			if (aEvent.tm > tmStart && aEvent.tm < tmEnd){
 				vaOut.push(aEvent);
@@ -91,9 +89,7 @@
 				</foreach>
 			</div>
 		</defmacro>
-		
-		
-		
+				
 		<let
 				startdow="{{_.fcFirstDOWOfMonth(_.tm)}}"
 				days="{{_.fcDaysInMonth(_.tm)}}"
@@ -137,12 +133,52 @@
 	</defmacro>
 
 
+	<defelt name="monthlyview2" tm="" events="{{ [] }}">
+		return function(){
+			var startdow=_.fcFirstDOWOfMonth(_.tm);
+			var days=_.fcDaysInMonth(_.tm);
+			var weeks=Math.ceil((startdow + days)/7);
+			var jqOut = $('<div class="monthly"></div>');
+			for (var week=0; week < weeks; week++){
+				var jqRow = $('<div class="monthly-row"></div>');
+				for (var dow=0; dow<7; dow++){
+					var calbox = week * 7 + dow;
+					var day = week * 7 + dow - startdow + 1;
 
+					if (calbox &lt; startdow){
+						jqRow.append($('<div class="monthly-cell blank"></div>'));
+					}
+					else if (calbox &gt;= days + startdow){
+						jqRow.append($('<div class="monthly-cell blank"></div>'));
+					}
+					else {
+						var eventsDay=_.faFilterByDate(
+							_.events, 
+							_.ftmShiftByDays(_.tm, day-1),	
+							_.ftmShiftByDays(_.tm, day) 
+						);
+						var jqCell=	$('<div class="monthly-cell" click="_.adddialog = true">' + day + '</div>');
+						each(eventsDay, function(event){
+							jqCell.append(
+								'<div>' 
+								+ _.fsTimeForTm(event["tm"]) + " - " + event["summary"] 
+								+ "</div>"
+							);
+						});
+						jqRow.append(jqCell);
+					}
+				}
+				jqOut.append(jqRow);
+			}
+			return jqOut;
+		}
+	</defelt>
+		
 	<!-- -------------------------------------- -->
 	<defmacro name="dialog" openwhen="">
-		<if test="{{_.on}}">
+		<if test="{{eval(_.openwhen)}}" myinner="_._inner">
 			<div class="dialog">
-				{{_._inner}}
+				{{_.myinner}}
 			</div>
 		</if>
 	</defmacro>
@@ -155,8 +191,7 @@
 		Summary <input model="summary">
 	</dialog>
 
-{{_.adddialog}}
-	
+
 	<style>
 	 .dialog {
 		 position: fixed;
@@ -208,8 +243,8 @@
 	</defun>
 
 	
-	<monthlyview tm="{{_.ftmFromS('8/1/2014')}}" events="{{_.events}}">
-	</monthlyview>
+	<monthlyview2 tm="{{_.ftmFromS('8/1/2014')}}" events="{{_.events}}">
+	</monthlyview2>
 
 
 
