@@ -44,7 +44,7 @@
 			for (var n=0,c=jqSub.length; n < c; n++){
 				var e = jqSub.get(n);
 				if (e.nodeType === 3){
-					e.nodeValue = e.nodeValue.replace(/[ \t\r\n\s]+[\r\n]/g,'\n');
+					e.nodeValue = (e.nodeValue+"").replace(/[ \t\r\n\s]+[\r\n]/g,'\n');
 					if (e.nodeValue.match(/^[^\S]*$/)){
 						if (bGotCR){
 							e.nodeValue='';
@@ -144,7 +144,8 @@
 		jqInstance.on("click", function(){
 			eval(_.click);
 		});
-		
+		jqInstance.data("clickdata","yes");
+		jqInstance.attr("data-clickbound","yes");
 		jqInstance.attr("clickbound","yes");
 		return jqInstance;
 	}
@@ -163,12 +164,15 @@
 	return function(jqInstance){
 		// only work on input elements, as defined by jQuery's :input selector
 		if ((jq.filter(":input")).length){
-			D("DOING MODEL");
-//			jq.val(_.format(scope._[_.model]));
+			var e=jq.get(0);
+			var nStart = e.selectionStart;
+			var nEnd = e.selectionEnd;
+			var sDir = e.selectionDirection;
+			jq.val(_.format(scope._[_.model]));
+			e.setSelectionRange(nStart,nEnd,sDir);
 			if (!jqInstance.data("sk-model")){
 				jqInstance.on("input", function(){
 					scope.setvar(_.model, _.parse($(this).val()));
-					jqInstance.focus();
 				});
 				jqInstance.data("sk-model", true);
 			}

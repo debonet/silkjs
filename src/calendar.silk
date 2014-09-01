@@ -1,4 +1,4 @@
-<let xnbl adddialog="{{false}}">
+<let nbl adddialog="{{false}}">
 
 	<defmacro name="mytable">
 		<let myinner="{{_._inner}}"><a>{{_.myinner}}</a></let>
@@ -28,9 +28,10 @@
 	</defun>
 
 	<!-- -------------------------------------- -->
-	<defun name="ftmShiftByDays">
+	<defun name="ftmDayOfMonth">
 		return function(tm, cDays){
-			return new Date(tm + 24*60*60*1000 * cDays).getTime();
+			var date = new Date(tm);
+			return new Date(date.getFullYear(), date.getMonth(), cDays).getTime();
 		}
 	</defun>
 
@@ -90,7 +91,7 @@
 				</foreach>
 			</div>
 		</defmacro>
-				
+		
 		<let
 				startdow="{{_.fcFirstDOWOfMonth(_.tm)}}"
 				days="{{_.fcDaysInMonth(_.tm)}}"
@@ -115,8 +116,8 @@
 											<monthviewday 
 													events="{{ _.faFilterByDate(
 													_.events, 
-													_.ftmShiftByDays(_.tm,_.day-1),	
-													_.ftmShiftByDays(_.tm,_.day) 
+													_.ftmDayOfMonth(_.tm,_.day-1),	
+													_.ftmDayOfMonth(_.tm,_.day) 
 													) }}"
 													day="{{_.day}}"
 												>
@@ -134,7 +135,7 @@
 	</defmacro>
 
 
-	<defelt name="monthlyview2" tm="" events="{{ [] }}">
+	<defelt name="monthlyview2" tm="" events="{{ [] }}" onclick="{{_.__identity__}}">
 		return function(){
 			var startdow=_.fcFirstDOWOfMonth(_.tm);
 			var days=_.fcDaysInMonth(_.tm);
@@ -146,22 +147,19 @@
 					var calbox = week * 7 + dow;
 					var day = week * 7 + dow - startdow + 1;
 
-					if (calbox < startdow){
-						jqRow.append($('<div class="monthly-cell blank"></div>').append(
-							JSON.stringify(_.events)
-						));
-					}
-					else if (calbox >= days + startdow){
+					if (calbox < startdow || calbox >= days + startdow){
 						jqRow.append($('<div class="monthly-cell blank"></div>'));
 					}
 					else {
 						var eventsDay=_.faFilterByDate(
 							_.events, 
-							_.ftmShiftByDays(_.tm, day-1),	
-							_.ftmShiftByDays(_.tm, day) 
+							_.ftmDayOfMonth(_.tm, day),	
+							_.ftmDayOfMonth(_.tm, day+1) 
 						);
 						var jqCell=	$('<div class="monthly-cell">' + day + '</div>');
-						jqCell.on('click',function(){_.adddialog = true;});
+						jqCell.on('click',(function(day){
+							return function(){_.onclick(_.ftmDayOfMonth(_.tm, day));};}
+						)(day));
 						each(eventsDay, function(event){
 							jqCell.append(
 								'<div>' 
@@ -177,12 +175,13 @@
 			return jqOut;
 		}
 	</defelt>
-		
+	
 	<!-- -------------------------------------- -->
 	<defmacro name="dialog" model="">
 		<if test="{{_[_.model]}}" myinner="{{_._inner}}">
 			<div class="dialog">
-				<div class="close" click="_[_.model]=false">X</div>
+				{{scope.sName}}
+				<div class="close" click="_[_.model]=false">CLOSE</div>
 				{{_.myinner}}
 			</div>
 		</if>
@@ -190,17 +189,21 @@
 
 	<!-- -------------------------------------- -->
 	<defelt name="dynamic" element="div">
-		D("COMPILE GENERATE DYNAMIC");
+		var fOut;
+		var sElement;
 		return function(){
-			var jqOut = $("<" + _.element + "></" + _.element + ">");
-			each(_._attributes,function(s){
-				if (s!=="element"){
-					jqOut.attr(s,_[s]);
-				}
-			});
-			jqOut.append(_._inner);
-		  D("GENERATE DYNAMIC");
-			return Silk.compile(scope,jqOut)();
+			if (sElement !== _.element){
+				var jqOut = $("<" + _.element + "></" + _.element + ">");
+				sElement = _.element;
+
+				each(_._attributes,function(s){
+					if (s!=="element"){
+						jqOut.attr(s,_[s]);
+					}
+				});
+				fOut = Silk.compile(scope,jqOut);
+			}
+			return fOut();
 		}
 	</defelt>
 
@@ -226,7 +229,7 @@
 				{{_.label}}
 			</div>
 			<div>
-				<dynamic element="{{_.element}}" model="{{_.model}}"></dynamic>
+				<dynamic element="{{_.element}}" model="{{_.model}}">{{_._inner}}</dynamic>
 			</div>
 		</div>
 	</defmacro>
@@ -269,35 +272,58 @@
 	</style>
 
 
-	<let events='{{
-		[
+	<let 
+			events='{{
+			[
 			{
-				stm: "2014-8-1 08:00:00",
-				summary: "planning meeting"
+			stm: "2014-8-1 08:00:00",
+			summary: "planning meeting"
 			},
 			{
-				stm: "2014-8-3 12:00:00",
-				summary: "lunch with joe"
+			stm: "2014-8-3 12:00:00",
+			summary: "lunch with joe"
 			}
-		]
+			]
 			}}'
+
+			date="date"
+			summary="summary"
 		>
 
-	<monthlyview2 tm="{{_.ftmFromS('8/1/2014')}}" events="{{_.events}}">
-	</monthlyview2>
+		<defun name="neweventclick">
+			D("NEWEVENTCLICK");
+			return function(tm){
+				_.adddialog = true; 
+				_.date=new Date(tm).toString();
+				_.summary='';
+			}
+		</defun>
 
+		<monthlyview2 
+				tm="{{_.ftmFromS('8/20/2014')}}" 
+				events="{{_.events}}"
+				onclick="{{_.neweventclick}}"
+			>
+		</monthlyview2>
 
-	<!-- -------------------------------------- -->
-	<dialog model="adddialog">
-		<let date="" summary="">
-			Add New Event
+		<!-- -------------------------------------- -->
+		<dialog model="adddialog">
+			Add New Event {{scope.sName}}
 			<question label="Date" model="date"></question>
 			<question label="Description" model="summary"></question>
-			<button click="_.events.push({stm:_.date,summary:_.summary}); D('click')">
+			<button click="D(_.date,_.summary);_.events.push({stm:_.date,summary:_.summary})">
 				OK
 			</button>
-		</let>
-	</dialog>
+		</dialog>
+	
+
+
+		{{JSON.stringify(_.events)}}
+
+		{{_.adddialog}}
 
 	</let>
+	
 </let>
+
+

@@ -30,62 +30,35 @@ var faAttributes = function(jq){
 // this tricky bit makes sure we don't remove/detach
 // node which we still need. detach and reattach
 // loses focus. remove wipes handlers
-var fSafeSwapContents = function(jq, jqNewContents){
+var fSafeSwapContents = function(jq, jqNew){
 
-	var veNew = jqNewContents.get();
+	var eParent = jq.get(0);
+	var veNew = jqNew.get();
 	var jqOld = jq.contents();
 	var veOld = jqOld.get();
 
-	var jqFocus = jqNewContents.find(":focus");
-
-
-	var nNew =0;
-	for (var nOld=0, cOld=veOld.length; nOld<cOld; nOld++){
-		if (veOld[nOld] !== veNew[nNew]){
-			if (veNew.indexOf(veOld[nOld]) === -1){
-				$(veOld[nOld]).remove();
-			}
-			// else somehow changed position
-		}
-		else{
-			nNew++;
-		}
-	}
-	for (var  cNew=veNew.length; nNew<cNew; nNew++){
-		jq.append($(veNew[nNew]));
-	}
-	
-/*
-	if (jqFocus.length){
-		var eFocus = jqFocus.get(0);
-
-		var nFocus = -1;
-		for (var nNew=0, cNew=veNew.length; nNew<cNew; nNew++){
-			if (eFocus === veNew[nNew]){
-				nFocus=nNew;
-			}
-		}
-
-		for (nNew=nFocus-1;  nNew>=0; nNew--){
-			D("APPEND!");
-			jq.prepend($(veNew[nNew]));
-		}
-		for (nNew=nFocus+1;  nNew<cNew; nNew++){
-			D("APPEND!");
-			jq.append($(veNew[nNew]));
-		}
-	}
-	else{
-		jq.append(jqNewContents);
-	}
+	var jqFocus = jqNew.find(":focus");
 
 	for (var nOld=0, cOld=veOld.length; nOld<cOld; nOld++){
 		if (veNew.indexOf(veOld[nOld]) === -1){
-			$(veOld[nOld]).remove();
+			$(veOld[nOld]).detach();
+			veOld.splice(nOld,1);
+			nOld --;
+			cOld --;
 		}
 	}
-	jqFocus.focus();
-*/
+
+	nOld = 0;
+	for (var nNew=0, cNew=veNew.length; nNew<cNew; nNew++){
+		if (veOld[nOld] !== veNew[nNew]){
+			eParent.insertBefore(veNew[nNew], veOld[nOld]);
+		}
+		else{
+			nOld++;
+		}
+	};
+
+
 
 };
 
@@ -103,7 +76,6 @@ var ffjqPassthrough = function(scope,jq){
 
 		var jqInner = scope._._inner;
 		fSafeSwapContents(jq, jqInner);
-
 		return jq;
 	}
 };
@@ -256,19 +228,22 @@ var fDefMacro = function(scope, jq){
 //	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
 	scope.defelt(sName, function(){
 		return function(scopeIn, jqIn){
+			var aAttrCall = faAttributes(jqIn);
+			each(aAttr, function(sVal, sVar){
+				if (!(sVar in aAttrCall)){
+					scopeIn.defvar(sVar, ffxInterpolateString(scope,sVal));
+				}
+			});
+			each(aAttrCall, function(sVal, sVar){
+				scopeIn.defvar(sVar, ffxInterpolateString(scopeIn.parent,sVal));
+			});
+			// make sure to clone contents as the macro can be called 
+			// multiple times
+			var f = nsSilk.compile(scopeIn, jq.contents().clone(true));
 			return function(){
-				var aAttrCall = faAttributes(jqIn);
-				each(aAttr, function(sVal, sVar){
-					if (!(sVar in aAttrCall)){
-						scopeIn.defvar(sVar, ffxInterpolateString(scope,sVal));
-					}
-				});
-				each(aAttrCall, function(sVal, sVar){
-					scopeIn.defvar(sVar, ffxInterpolateString(scopeIn.parent,sVal));
-				});
-				// make sure to clone contents as the macro can be called 
-				// multiple times
-				return nsSilk.compile(scopeIn, jq.contents().clone(true))();
+				var jqOut = f();
+				return jqOut;
+
 			};
 		};
 	});
@@ -278,7 +253,7 @@ var fDefMacro = function(scope, jq){
 // ---------------------------------------------------------------------------
 var fLiveExpression = function(scope, x){
 
-	x=x.replace(/[\r\n]/g,' ');
+	x=(""+x).replace(/[\r\n]/g,' ');
 	
 	try{
 		var f = new Function("return " + x);
@@ -289,6 +264,7 @@ var fLiveExpression = function(scope, x){
 			return x;
 		}
 		catch(e){
+//			D("IS LIVE",x);
 			// is live
 		}
 	}
@@ -300,11 +276,12 @@ var fLiveExpression = function(scope, x){
 		""
 			+ "(function(){\n"
 			+ "  var _ = scope._;\n"
-			+ "  try{\n"
+//			+ "  try{\n"
 			+ "    return " + x + ";\n"
-			+ "  } catch(e){\n"
-			+ "    return '';\n"
-			+ "  } "
+//			+ "  } catch(e){\n"
+//			+ "    D('EXCEPTION',e);"
+//			+ "    return '';\n"
+//			+ "  } "
 			+ "})"
 	);
 };
@@ -314,7 +291,7 @@ var fLiveExpression = function(scope, x){
 
 // ---------------------------------------------------------------------------
 var fjqText = function(s){
-	return Silk.parseHTML(s);
+	return Silk.parseHTML(""+s);
 };
 
 var reInterpolate = /\{\{([\s\S]*?)\}\}/gm;
@@ -341,15 +318,14 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		vx.push(s.substr(n));	
 	}
 
- 
+
 	if (vx.length === 1){
 		if (typeof(vx[0]) === "function"){
 			return function(){
 				var x=vx[0]();
 			
 				if (x instanceof $){
-					// clone because variables can be used many times
-					return x.clone(true);
+					return x;
 				}
 				else{
 					return bForceJq?fjqText(x):x;
@@ -359,36 +335,41 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		return bForceJq?fjqText(vx[0]):vx[0];
 	}
 
+
+	var vve=[];
 	return function(){
-		var ve=[];
-		s="";
-		each(vx,function(x){
-			if (typeof(x) === "function"){
-				x=x();
- 			}
-			if (x instanceof $){
-				// clone because variables can be used many times
-				if (s.length){
-					ve = ve.concat(fjqText(s).get());
-					s="";
-				}
-				ve = ve.concat(x.clone(true).get());
+		var veOut=[];
+
+		each(vx,function(x,n){
+			var bFunc = (typeof(x) === "function")
+
+			if (!bFunc && vve[n]){
+				veOut = veOut.concat(vve[n]);
 			}
 			else{
-				s+=x;
-			}
+				if (bFunc){
+					x=x();
+					if (x instanceof $){
+						veOut = veOut.concat(x.get());
+					}
+					else{
+						veOut = veOut.concat(fjqText(x).get());
+					}
+ 				}
+				else{
+					if (x instanceof $){
+						vve[n] = x.get();
+					}
+					else{
+						vve[n] = fjqText(x).get();
+					}
+					veOut = veOut.concat(vve[n]);
+				}
+			};
 		});
 
-		if (ve.length===0){
-			return bForceJq?fjqText(s):s;
-		}
-
-		if (s.length){
-			ve = ve.concat(fjqText(s).get());
-		}
-
-		return $(ve);
-	}
+		return $(veOut);
+	};
 };
 
 // ---------------------------------------------------------------------------
@@ -408,6 +389,7 @@ var ffjqCompileElements = function(scope, jq){
 	);
 
 	each(jq.get(),function(e,n){
+
 		scopeInner.defvar(n,ffjqCompileElement(scope, $(e)));
 	});
 
@@ -416,11 +398,12 @@ var ffjqCompileElements = function(scope, jq){
 	var fOut = function(){
     var ve=[];
 		for (var n=0; n<c; n++){
-      ve = ve.concat(scopeInner.getvar(n).get());
+			var jqInner = scopeInner.getvar(n);
+			ve = ve.concat(jqInner.get());
 		}
 		return $(ve);
 	};
-
+	
 
 	fOut.fRecompile = function(){
 		return ffjqCompileElements(scope, jq);
@@ -480,7 +463,7 @@ var ffjqCompileElement = function(scopeIn,jqScript){
 
 	// elements
 	var scope = new Scope(
-		scopeIn.sName + "." + sElement, // + Math.floor(Math.random()*1000),
+		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000),
 		scopeIn
 	);
 

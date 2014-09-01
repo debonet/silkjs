@@ -49,7 +49,7 @@ LiveValue.prototype.fSet = function(x){
 LiveValue.prototype.fDirty = function(){	
 	// if we weren't already dirty we are now 
 	if (!this.bDirty){
-//		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
+		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
 
 		if (this.fCallbackDirty){
 			this.fCallbackDirty();
@@ -61,7 +61,7 @@ LiveValue.prototype.fDirty = function(){
 		// so tell listensers
 		var lv = this;
 		this.vlvListeners.forEach(function(lvListener){
-//			D("MARKING DIRTY", lv.sName, "--->",lvListener.sName);
+			D("MARKING DIRTY", lv.sName, "--->",lvListener.sName);
 			lvListener.fDirty();
 		});
 
