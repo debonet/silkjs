@@ -1,5 +1,6 @@
 // ---------------------------------------------------------------------------
 var D = require("./fDebugOutput");
+var each = require("./each");
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
@@ -29,7 +30,6 @@ LiveValue.prototype.fSet = function(x){
 
 	if(this._x !== x){
 		this.fDirty();
-		this._x = x;
 
 		if (x instanceof Array){
 			var lv = this;
@@ -40,9 +40,24 @@ LiveValue.prototype.fSet = function(x){
 				};
 				Object.defineProperty(x,sf,{enumerable:false});
 			});
+			this._x = x;
 		}
+		else if (typeof(x) === "object"){
+			var lv = this;
+			var LiveObject = require("./LiveObject");
+			
+			var lo = new LiveObject(this.sName + "[]");
 
-
+			each(x,function(xSub,n){
+				lo.fDefine(n,xSub);
+				lo.alv[n].fAddListener(lo);
+			});
+			this._x = lo;
+		}
+		else{
+			this._x = x;
+		}
+		
 	}
 };
 
@@ -82,6 +97,7 @@ LiveValue.prototype.fAddListener = function(lv){
 		this.vlvListeners.push(lv);
 	}
 };
+
 
 
 // ---------------------------------------------------------------------------
@@ -154,6 +170,7 @@ LiveValue.prototype.fxGet = function(){
 			this._xCached = this._x;
 		}	
 
+		// asynchronously check arrays?
 		if (this._x instanceof Array){
 			var lv = this;
 			var c= this._x.length;

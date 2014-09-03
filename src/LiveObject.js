@@ -14,20 +14,36 @@ var LiveObject = function(s, loParent){
 	this.vloChildren = [];
 	this.vlvListeners = [];
 
-	this.aAccessLayer = {};
+	var lo = this;
+	each(LiveObject.prototype, function(f,s){
+		Object.defineProperty(lo,s,{
+			value: f,
+			enumerable: false,
+			configurable: false
+		});
+	});
+
+	each(this, function(f,s){
+		Object.defineProperty(lo,s,{
+			value: f,
+			enumerable: false,
+			configurable: false
+		});
+	});
 
 	if(loParent){
 		loParent.vloChildren.push(this);
-		this.aAccessLayer.__proto__ = loParent.aAccessLayer;
+		this.__proto__ = loParent;
 	}
 };
 
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDirty = function(){   
-    this.vlvListeners.forEach(function(lvListener){
-        lvListener.fDirty();
-    });
+	D("DIRTYOBJ",this.sName);
+  this.vlvListeners.forEach(function(lvListener){
+    lvListener.fDirty();
+  });
 };
  
 // ---------------------------------------------------------------------------
@@ -50,9 +66,12 @@ Object.defineProperty(
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fCheckHonesty = function(){
 	var lo=this;
-	each(Object.keys(this.aAccessLayer), function(s){
+	each(Object.keys(this), function(s){
 		if (!(s in lo.alv)){
-			throw("ILLEGAL VARIABLE ASSIGNMENT TO ACCESSLAYER " + lo.sName + "."+ s);
+			throw("ILLEGAL VARIABLE ASSIGNMENT WITHOUT DEFINE " + lo.sName + "." + s);
+		}
+		if (lo.alv[s]._x instanceof LiveObject){
+			lo.alv[s]._x.fCheckHonesty();
 		}
 	});
 
@@ -98,11 +117,15 @@ LiveObject.prototype.fDefine = function(s,x,f,bMutable){
 
 	var bExistsLocal = this.fbExistsLocally(s);
 
-	var lo=this;
 	if (!bExistsLocal){
 		this.alv[s] = new LiveValue(this.sName + ":" + s, x, bMutable, f);
+		if (this.vlvListeners.length){
+			this.fDirty();
+			this.alv[s].fAddListener(this);
+		}
+		var lo=this;
 		Object.defineProperty(
-			lo.aAccessLayer,	s, {
+			lo,	s, {
 				get : function(){return lo.alv[s].fxGet();},
 				set : function(x){return lo.alv[s].fSet(x);},
 				configurable: true,
@@ -112,18 +135,11 @@ LiveObject.prototype.fDefine = function(s,x,f,bMutable){
 		);
 	}
 	else{
-		while(lo){
-			if (lo.fbExistsLocally(s)){
-				lo.alv[s].bMutable = bMutable;
-				if (f){
-					lo.alv[s].fCallbackDirty = f;
-				}
-				lo.alv[s].fSet(x);
-				return;
-			}
-			lo = lo.loParent;
+		this.alv[s].bMutable = bMutable;
+		if (f){
+			this.alv[s].fCallbackDirty = f;
 		}
-		D("UNTRACKED DEFINE",this.sName,s);
+		this.alv[s].fSet(x);
 	}
 };
 
@@ -158,9 +174,10 @@ LiveObject.prototype.fDirtyVar = function(s){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDelete = function(s){
-	if (s in this.aAccessLayer){
+	if (s in this.alv){
+		delete this[s];
 		delete this.alv[s];
-		delete this.aAccessLayer[s];
+		this.fDirty();
 		return;
 	}
 	D("UNKNOWN VARIABLE ",this.sName,s);
@@ -180,7 +197,7 @@ LiveObject.prototype.fxGet = function(s){
 LiveObject.prototype.fSet = function(s,x){
 	if (s in this.alv){
 		this.alv[s].fSet(x);
-		this.alv[s].fAddListener(this);
+//		this.alv[s].fAddListener(this);
 		return;
 	}
 	if (this.loParent){

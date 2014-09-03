@@ -18,7 +18,7 @@ var Scope = function(s, scopeParent, bVarOnly){
 
 Object.defineProperty(
 	Scope.prototype,"_", {
-		get: function(){return this.loVariables.aAccessLayer;}
+		get: function(){return this.loVariables;}
 	}
 );
 

@@ -6,7 +6,7 @@ var each = function(x,f){
 			f(vx[n],n,vx);
 		}
 	}
-	else if (x instanceof $){
+	else if (global.$ && x instanceof $){
 		var jq=x;
 		var vjq=[];
 		for (var n=0,c=jq.get().length; n<c; n++){

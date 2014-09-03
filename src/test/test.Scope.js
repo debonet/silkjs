@@ -1,5 +1,5 @@
 "use strict";
-
+var D=require("../fDebugOutput");
 
 var Scope = require("../Scope");
 
@@ -88,14 +88,11 @@ describe("Scope Scoping", function(){
 		assert.equal(scope2._.b,3);
 		assert.equal(scope._.b,undefined);
 
-
 		scope2.delvar("a");
 		assert.equal(scope2._.a,1);
-
 
 		scope.defvar("c",20);
 		assert.equal(scope2._.c,20);
 		assert.equal(scope2.getvar('c'),20);
-		
 	});
 });
