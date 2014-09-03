@@ -3,6 +3,7 @@
 var each = require("./each");
 var ffBind = require("./ffBind");
 var LiveObject = require("./LiveObject");
+var D = require('./fDebugOutput');
 
 var Scope = function(s, scopeParent, bVarOnly){
 	this.sName=s;
@@ -79,7 +80,8 @@ Scope.prototype.delvar = function(s){
 };
 
 Scope.prototype.dirtyvar = function(s){
-	return this.loVariables.fbIsDirty(s);
+	D("DIRTYVAR",s);
+	return this.loVariables.fDirtyVar(s);
 };
 
 Scope.prototype.getvar = function(s){
@@ -109,7 +111,7 @@ Scope.prototype.delelt = function(s){
 };
 
 Scope.prototype.dirtyelt = function(s){
-	return this.loElements.fbIsDirty(s);
+	return this.loElements.fDirtyVar(s);
 };
 
 Scope.prototype.getelt = function(s){
@@ -138,7 +140,7 @@ Scope.prototype.delattr = function(s){
 };
 
 Scope.prototype.dirtyattr = function(s){
-	return this.loAttributes.fbIsDirty(s);
+	return this.loAttributes.fDirtyVar(s);
 };
 
 Scope.prototype.getattr = function(s){

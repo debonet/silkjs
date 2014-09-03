@@ -115,6 +115,9 @@ LiveObject.prototype.fDefine = function(s,x,f,bMutable){
 		while(lo){
 			if (lo.fbExistsLocally(s)){
 				lo.alv[s].bMutable = bMutable;
+				if (f){
+					lo.alv[s].fCallbackDirty = f;
+				}
 				lo.alv[s].fSet(x);
 				return;
 			}
@@ -139,6 +142,18 @@ LiveObject.prototype.fRecompile = function(s){
 		return this.loParent.fRecompile(s);
 	}
 	D("RECOMPILE UNKNOWN VARIABLE ",this.sName,s);
+};
+
+// ---------------------------------------------------------------------------
+LiveObject.prototype.fDirtyVar = function(s){
+	if (s in this.alv){
+		this.alv[s].fDirty(s);
+		return;
+	}
+	if (this.loParent){
+		return this.loParent.fDirtyVar(s);
+	}
+	D("UNKNOWN VARIABLE ",this.sName,s);
 };
 
 // ---------------------------------------------------------------------------

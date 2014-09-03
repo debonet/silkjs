@@ -5,7 +5,7 @@ module.exports = function(){
 	var vxArg = Array.prototype.slice.call(arguments);
 
 	each(vxArg, function(xArg,n){
-		if (typeof(xArg) === 'object' && xArg instanceof $){
+		if (global.$ && typeof(xArg) === 'object' && xArg instanceof $){
 			var jq = xArg;
 			var s="jquery [";
 			jq.each(function(ne,e){

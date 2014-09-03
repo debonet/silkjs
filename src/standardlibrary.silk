@@ -141,12 +141,14 @@
 <!-- Add click -->
 <defattr name="click">
 	return function(jqInstance){
-		jqInstance.on("click", function(){
-			eval(_.click);
-		});
-		jqInstance.data("clickdata","yes");
-		jqInstance.attr("data-clickbound","yes");
-		jqInstance.attr("clickbound","yes");
+		if (!jqInstance.data("sk-click")){
+			D("BINDING CLICK");
+			jqInstance.on("click", function(){
+				D("DOING CLICK",_.click,scope.sName);
+				eval(_.click);
+			});
+			jqInstance.data("sk-click",true);
+		}
 		return jqInstance;
 	}
 </defattr>
@@ -193,3 +195,22 @@
 	}
 </defelt>
 
+
+<!-- disabled (lets the value be false) -->
+<defattr name="disabled">
+	return function(jqInstance){
+		return jqInstance.prop('disabled',_.disabled);
+	}
+</defattr>
+
+
+<!-- selectitems (use in <select selectitems=""> ) -->
+<defattr name="selectitems">
+	return function(jqInstance){
+		D("ADDING ITEMS");
+		each(_.selectitems, function(x,s){
+			jqInstance.append($("<option value=" + s + ">" + x + "</option>"));
+		});
+		return jqInstance;
+	};
+</defattr>

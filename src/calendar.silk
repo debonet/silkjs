@@ -338,7 +338,7 @@
 			Add New Event {{scope.sName}}
 			<question label="Date" model="date"></question>
 			<question label="Description" model="summary"></question>
-			<button click="D(_.date,_.summary);_.events.push({stm:_.date,summary:_.summary})">
+			<button click="_.events.push({stm:_.date,summary:_.summary});">
 				OK
 			</button>
 		</dialog>

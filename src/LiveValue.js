@@ -21,24 +21,28 @@ var LiveValue = function(s,x,bMutable,fCallbackDirty){
 	this.fSet(x);
 };
 
-
 // ---------------------------------------------------------------------------
 LiveValue.prototype.fSet = function(x){
 	// change function
 //	D("SET",this.sName,x);
 
+
 	if(this._x !== x){
 		this.fDirty();
 		this._x = x;
-		var lv = this;
+
 		if (x instanceof Array){
+			var lv = this;
 			['push','pop','shift','unshift','splice','sort','reverse'].forEach(function(sf){
 				x[sf] = function(){
 					lv.fDirty();
 					Array.prototype[sf].apply(this,arguments);
 				};
+				Object.defineProperty(x,sf,{enumerable:false});
 			});
 		}
+
+
 	}
 };
 
@@ -92,17 +96,21 @@ LiveValue.prototype.fRecompile = function(){
 };
 
 
+
 // ---------------------------------------------------------------------------
 var kvlvDependsCache=[];
 var klvListeners = [];
 var cDepth = 0;
+var fTrackUsage=function(lv){
+	if(kvlvDependsCache.length && !lv.bMutable){
+		var c = kvlvDependsCache.length;
+		kvlvDependsCache[c-1].push(lv);
+		lv.fAddListener(klvListeners[c-1]);
+	}
+};
 
 LiveValue.prototype.fxGet = function(){
-	if(kvlvDependsCache.length && !this.bMutable){
-		var c = kvlvDependsCache.length;
-		kvlvDependsCache[c-1].push(this);
-		this.fAddListener(klvListeners[c-1]);
-	}
+	fTrackUsage(this);
 
 	if (this.bDirty){
 		this.bDirty = false;
@@ -145,6 +153,18 @@ LiveValue.prototype.fxGet = function(){
 		else{
 			this._xCached = this._x;
 		}	
+
+		if (this._x instanceof Array){
+			var lv = this;
+			var c= this._x.length;
+			setTimeout(function(){
+				if (c !== lv._x.length && !lv.bDirty){
+					D("LENGTH CHANGE",c,lv._x);
+					lv.fDirty();
+				}
+			},0);
+		}
+
 	}
 	return this._xCached;
 };
