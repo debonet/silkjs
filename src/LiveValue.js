@@ -31,6 +31,7 @@ LiveValue.prototype.fSet = function(x){
 	if(this._x !== x){
 		this.fDirty();
 
+/*
 		if (x instanceof Array){
 			var lv = this;
 			['push','pop','shift','unshift','splice','sort','reverse'].forEach(function(sf){
@@ -42,15 +43,17 @@ LiveValue.prototype.fSet = function(x){
 			});
 			this._x = x;
 		}
-		else if (typeof(x) === "object"){
+		else
+*/
+		if (typeof(x) === "object"){
 			var lv = this;
 			var LiveObject = require("./LiveObject");
 			
-			var lo = new LiveObject(this.sName + "[]");
+			var lo = new LiveObject(this.sName + "[]",undefined,x instanceof Array);
 
 			each(x,function(xSub,n){
 				lo.fDefine(n,xSub);
-				lo.alv[n].fAddListener(lo);
+				lo.xlv[n].fAddListener(lo);
 			});
 			this._x = lo;
 		}

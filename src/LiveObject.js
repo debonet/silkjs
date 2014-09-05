@@ -7,14 +7,30 @@ var ffBind = require("./ffBind");
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var LiveObject = function(s, loParent){
+var LiveObject = function(s, loParent, bArray){
 	this.sName = s;
-	this.alv = {};
 	this.loParent = loParent;
 	this.vloChildren = [];
 	this.vlvListeners = [];
 
+	this.xlv = bArray ? [] : {};
+
 	var lo = this;
+
+	// add length pseudo-member if array
+	if (bArray){
+		var lo=this;
+		Object.defineProperty(
+			lo,	"length", {
+				get : function(){return lo.xlv.length},
+				configurable: false,
+				enumerable: false,
+				writeable : false
+			}
+		);
+	}
+
+	// freeze methods
 	each(LiveObject.prototype, function(f,s){
 		Object.defineProperty(lo,s,{
 			value: f,
@@ -23,6 +39,7 @@ var LiveObject = function(s, loParent){
 		});
 	});
 
+	// freeze members
 	each(this, function(f,s){
 		Object.defineProperty(lo,s,{
 			value: f,
@@ -31,9 +48,61 @@ var LiveObject = function(s, loParent){
 		});
 	});
 
+	// set up scoping hierarchy 
 	if(loParent){
 		loParent.vloChildren.push(this);
 		this.__proto__ = loParent;
+	}
+};
+
+
+LiveObject.prototype.push = function(x){
+	D("PUSHME",x);
+	this.fDirty();
+	this.xlv.push(new LiveValue(this.sName+"[]",x));
+	this.fAddAccess(this.xlv.length-1);
+};
+
+LiveObject.prototype.pop = function(){
+	this.fDirty();
+	delete this[this.xlv.length-1];
+	return this.xlv.pop().fxGet();
+};
+
+LiveObject.prototype.shift = function(x){
+	this.fDirty();
+	this.xlv.shift(new LiveValue(this.sName+"[]",x));
+	this.fAddAccess(this.xlv.length-1);
+};
+
+LiveObject.prototype.unshift = function(){
+	this.fDirty();
+	delete this[this.xlv.length-1];
+	return this.xlv.unshift().fxGet();
+};
+
+LiveObject.prototype.sort = function(f){
+	this.fDirty();
+	this.xlv.sort(f);
+};
+
+LiveObject.prototype.reverse = function(){
+	this.fDirty();
+	this.xlv.reverse();
+};
+
+LiveObject.prototype.splice = function(){
+	this.fDirty();
+	var cOrig = this.xlv.length;
+	Array.prototype.splice(this.xlv,arguments);
+	var cNew = this.xlv.length;
+
+	var n;
+	for (n=cNew; n<cOrig; n++){
+		delete this[n];
+	}
+	for (var n=cOrig; n<cNew; n++){
+		this.fAddAccess(n);
 	}
 };
 
@@ -67,11 +136,11 @@ Object.defineProperty(
 LiveObject.prototype.fCheckHonesty = function(){
 	var lo=this;
 	each(Object.keys(this), function(s){
-		if (!(s in lo.alv)){
+		if (!(s in lo.xlv)){
 			throw("ILLEGAL VARIABLE ASSIGNMENT WITHOUT DEFINE " + lo.sName + "." + s);
 		}
-		if (lo.alv[s]._x instanceof LiveObject){
-			lo.alv[s]._x.fCheckHonesty();
+		if (lo.xlv[s]._x instanceof LiveObject){
+			lo.xlv[s]._x.fCheckHonesty();
 		}
 	});
 
@@ -86,7 +155,7 @@ LiveObject.prototype.fvslv = function(){
 
 	var lo = this;
 	do{
-		each(lo.alv, function(x,s){
+		each(lo.xlv, function(x,s){
 			setVar[s]=true;
 		});
 		lo = lo.loParent;
@@ -111,6 +180,22 @@ LiveObject.prototype.faSimple = function(){
 	return a;
 };
 
+LiveObject.prototype.fAddAccess = function(s){
+	if (this.vlvListeners.length){
+		this.fDirty();
+		this.xlv[s].fAddListener(this);
+	}
+	var lo=this;
+	Object.defineProperty(
+		lo,	s, {
+			get : function(){return lo.xlv[s].fxGet();},
+			set : function(x){return lo.xlv[s].fSet(x);},
+			configurable: true,
+			enumerable: true,
+			writeable : false
+		}
+	);
+};
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDefine = function(s,x,f,bMutable){
@@ -118,28 +203,15 @@ LiveObject.prototype.fDefine = function(s,x,f,bMutable){
 	var bExistsLocal = this.fbExistsLocally(s);
 
 	if (!bExistsLocal){
-		this.alv[s] = new LiveValue(this.sName + ":" + s, x, bMutable, f);
-		if (this.vlvListeners.length){
-			this.fDirty();
-			this.alv[s].fAddListener(this);
-		}
-		var lo=this;
-		Object.defineProperty(
-			lo,	s, {
-				get : function(){return lo.alv[s].fxGet();},
-				set : function(x){return lo.alv[s].fSet(x);},
-				configurable: true,
-				enumerable: true,
-				writeable : false
-			}
-		);
+		this.xlv[s] = new LiveValue(this.sName + ":" + s, x, bMutable, f);
+		this.fAddAccess(s);
 	}
 	else{
-		this.alv[s].bMutable = bMutable;
+		this.xlv[s].bMutable = bMutable;
 		if (f){
-			this.alv[s].fCallbackDirty = f;
+			this.xlv[s].fCallbackDirty = f;
 		}
-		this.alv[s].fSet(x);
+		this.xlv[s].fSet(x);
 	}
 };
 
@@ -150,8 +222,8 @@ LiveObject.prototype.fDefineMutable = function(s,x,f){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fRecompile = function(s){
-	if (s in this.alv){
-		this.alv[s].fRecompile();
+	if (s in this.xlv){
+		this.xlv[s].fRecompile();
 		return;
 	}
 	if (this.loParent){
@@ -162,8 +234,8 @@ LiveObject.prototype.fRecompile = function(s){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDirtyVar = function(s){
-	if (s in this.alv){
-		this.alv[s].fDirty(s);
+	if (s in this.xlv){
+		this.xlv[s].fDirty(s);
 		return;
 	}
 	if (this.loParent){
@@ -174,9 +246,9 @@ LiveObject.prototype.fDirtyVar = function(s){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDelete = function(s){
-	if (s in this.alv){
+	if (s in this.xlv){
 		delete this[s];
-		delete this.alv[s];
+		delete this.xlv[s];
 		this.fDirty();
 		return;
 	}
@@ -185,8 +257,8 @@ LiveObject.prototype.fDelete = function(s){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fxGet = function(s){
-	if (s in this.alv){
-		return this.alv[s].fxGet();
+	if (s in this.xlv){
+		return this.xlv[s].fxGet();
 	}
 	if (this.loParent){
 		return this.loParent.fxGet(s);
@@ -195,9 +267,9 @@ LiveObject.prototype.fxGet = function(s){
 };
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fSet = function(s,x){
-	if (s in this.alv){
-		this.alv[s].fSet(x);
-//		this.alv[s].fAddListener(this);
+	if (s in this.xlv){
+		this.xlv[s].fSet(x);
+//		this.xlv[s].fAddListener(this);
 		return;
 	}
 	if (this.loParent){
@@ -208,7 +280,7 @@ LiveObject.prototype.fSet = function(s,x){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fbExists = function(s){
-	if (s in this.alv){
+	if (s in this.xlv){
 		return true;
 	}
 	if (this.loParent){
@@ -219,13 +291,13 @@ LiveObject.prototype.fbExists = function(s){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fbExistsLocally = function(s){
-	return s in this.alv;
+	return s in this.xlv;
 };
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fbIsDirty = function(s){
-	if (s in this.alv){
-		return this.alv[s].bDirty;
+	if (s in this.xlv){
+		return this.xlv[s].bDirty;
 	}
 	D("UNKNOWN VARIABLE ",this.sName,s);
 };
