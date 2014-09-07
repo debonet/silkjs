@@ -30,15 +30,6 @@ var LiveObject = function(s, loParent, bArray){
 		);
 	}
 
-	// freeze methods
-	each(LiveObject.prototype, function(f,s){
-		Object.defineProperty(lo,s,{
-			value: f,
-			enumerable: false,
-			configurable: false
-		});
-	});
-
 	// freeze members
 	each(this, function(f,s){
 		Object.defineProperty(lo,s,{
@@ -301,6 +292,16 @@ LiveObject.prototype.fbIsDirty = function(s){
 	}
 	D("UNKNOWN VARIABLE ",this.sName,s);
 };
+
+
+// freeze class methods
+each(LiveObject.prototype, function(f,s){
+	Object.defineProperty(LiveObject.prototype,s,{
+		value: f,
+		enumerable: false,
+		configurable: false
+	});
+});
 
 
 module.exports = LiveObject;

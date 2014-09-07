@@ -58,7 +58,8 @@
 		var vaOut = [];
 		each(vaEvents,function(aEvent){
 			if (!("tm" in aEvent)){
-				aEvent.tm = _.ftmFromS(aEvent.stm);
+			D(aEvent.toString());
+				aEvent.fDefine('tm', _.ftmFromS(aEvent.stm));
 			}
 			if (aEvent.tm > tmStart && aEvent.tm < tmEnd){
 				vaOut.push(aEvent);
@@ -178,7 +179,7 @@
 	
 	<!-- -------------------------------------- -->
 	<defelt name="click-blocker">
-		var jq=$("<div class='dialog-blocker' style='width:100%; height: 100%; position: fixed;top:0; left:0;'></div>");
+		var jq=$("&lt;div class='dialog-blocker' style='width:100%; height: 100%; position: fixed;top:0; left:0;'>&lt;/div>");
 		jq.on('click',function(event){event.stopPropagation();});
 		return function(){
 			return jq;

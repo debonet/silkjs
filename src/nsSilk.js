@@ -144,7 +144,7 @@ var fDefCode = function(scope,jq, sfDefine){
 		f=eval(sf);
 	}
 	catch(e){
-		D("\nERROR: syntax error in " + sfDefine + " " + sName);
+		D("\nERROR: syntax error in " + sfDefine + " " + sName, sf);
 		throw(e);
 	}
 

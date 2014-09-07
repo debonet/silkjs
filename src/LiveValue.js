@@ -45,7 +45,10 @@ LiveValue.prototype.fSet = function(x){
 		}
 		else
 */
-		if (typeof(x) === "object"){
+		if (
+			typeof(x) === "object" 
+				&& (x.constructor.name === "Object" || x.constructor.name==="Array")
+		){
 			var lv = this;
 			var LiveObject = require("./LiveObject");
 			
