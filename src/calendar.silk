@@ -58,7 +58,7 @@
 		var vaOut = [];
 		each(vaEvents,function(aEvent){
 			if (!("tm" in aEvent)){
-			D(aEvent.toString());
+			D(aEvent);
 				aEvent.fDefine('tm', _.ftmFromS(aEvent.stm));
 			}
 			if (aEvent.tm > tmStart && aEvent.tm < tmEnd){

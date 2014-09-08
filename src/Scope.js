@@ -11,9 +11,9 @@ var Scope = function(s, scopeParent, bVarOnly){
 	this.vlvListeners = [];
 
 	scopeParent = scopeParent || {};
-	this.loVariables  = new LiveObject(s + "(vars)", scopeParent.loVariables);
-	this.loElements   = new LiveObject(s + "(elt)", scopeParent.loElements);
-	this.loAttributes = new LiveObject(s + "(attr)", scopeParent.loAttributes);
+	this.loVariables  = new LiveObject(s + "(vars)", false, scopeParent.loVariables);
+	this.loElements   = new LiveObject(s + "(elt)", false, scopeParent.loElements);
+	this.loAttributes = new LiveObject(s + "(attr)", false, scopeParent.loAttributes);
 };
 
 Object.defineProperty(

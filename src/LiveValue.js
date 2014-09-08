@@ -52,7 +52,7 @@ LiveValue.prototype.fSet = function(x){
 			var lv = this;
 			var LiveObject = require("./LiveObject");
 			
-			var lo = new LiveObject(this.sName + "[]",undefined,x instanceof Array);
+			var lo = new LiveObject(this.sName + "[]", x instanceof Array);
 
 			each(x,function(xSub,n){
 				lo.fDefine(n,xSub);
@@ -73,7 +73,7 @@ LiveValue.prototype.fSet = function(x){
 LiveValue.prototype.fDirty = function(){	
 	// if we weren't already dirty we are now 
 	if (!this.bDirty){
-		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
+//		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
 
 		if (this.fCallbackDirty){
 			this.fCallbackDirty();

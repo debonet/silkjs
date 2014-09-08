@@ -4,6 +4,8 @@ var each = require("./each");
 var ffBind = require("./ffBind");
 var Scope = require("./Scope");
 var nsUtil = require("util");
+var LiveObject = require("./LiveObject");
+
 var D = require("./fDebugOutput");
 
 // ---------------------------------------------------------------------------
@@ -247,7 +249,7 @@ var fDefMacro = function(scope, jq){
 
 
 // ---------------------------------------------------------------------------
-var fLiveExpression = function(scope, x){
+var ffxLiveExpression = function(scope, x){
 
 	x=(""+x).replace(/[\r\n]/g,' ');
 	
@@ -272,15 +274,12 @@ var fLiveExpression = function(scope, x){
 		""
 			+ "(function(){\n"
 			+ "  var _ = scope._;\n"
-//			+ "  try{\n"
 			+ "    return " + x + ";\n"
-//			+ "  } catch(e){\n"
-//			+ "    D('EXCEPTION',e);"
-//			+ "    return '';\n"
-//			+ "  } "
 			+ "})"
 	);
+
 };
+
 
 
 
@@ -297,74 +296,42 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 		return bForceJq?fjqText(s):s;
 	}
 
-	var aMatch;
-	var vx=[];
+
+	var lo = new LiveObject(
+		scope.sName+":TEXTINNER" + Math.floor(Math.random()*1000), true
+	);
+
 	var n = 0;
-	
+	var aMatch;
 	while(aMatch = reInterpolate.exec(s)){
 		var c = aMatch[0].length;
 		if (aMatch["index"]){
-			vx.push(s.slice(n,aMatch["index"]));
+			lo.push(fjqText(s.slice(n,aMatch["index"])));
 		}
 		n=aMatch["index"] + c;
-		vx.push(fLiveExpression(scope,aMatch[1]));
+		lo.push(ffxLiveExpression(scope,aMatch[1]));
 	};
 
 	if (n!==s.length){
-		vx.push(s.substr(n));	
+		lo.push(fjqText(s.substr(n)));	
 	}
 
-
-	if (vx.length === 1){
-		if (typeof(vx[0]) === "function"){
-			return function(){
-				var x=vx[0]();
-			
-				if (x instanceof $){
-					return x;
-				}
-				else{
-					return bForceJq?fjqText(x):x;
-				}
-			};
+	if (lo.length === 1){
+		return function(){
+			return lo[0];
 		}
-		return bForceJq?fjqText(vx[0]):vx[0];
 	}
 
-
-
-	D("INTERP",s,scope.sName);
-
-	var vve=[];
 	return function(){
 		var veOut=[];
 
-		each(vx,function(x,n){
-			var bFunc = (typeof(x) === "function")
-
-			if (!bFunc && vve[n]){
-				veOut = veOut.concat(vve[n]);
+//		D(s,lo);
+		each(lo,function(x,n){
+			if (!(x instanceof $)){
+				x = fjqText(x);
 			}
-			else{
-				if (bFunc){
-					x=x();
-					if (x instanceof $){
-						veOut = veOut.concat(x.get());
-					}
-					else{
-						veOut = veOut.concat(fjqText(x).get());
-					}
- 				}
-				else{
-					if (x instanceof $){
-						vve[n] = x.get();
-					}
-					else{
-						vve[n] = fjqText(x).get();
-					}
-					veOut = veOut.concat(vve[n]);
-				}
-			};
+//			D("GOT",x.constructor.name, n, x,lo[n],x.b);
+			veOut = veOut.concat(x.get());
 		});
 
 		return $(veOut);
@@ -383,24 +350,33 @@ var ffjqEvalTextElement = function(scope,jqScript){
 // ---------------------------------------------------------------------------
 var ffjqCompileElements = function(scope, jq){
 
-	var scopeInner = new Scope(
-		scope.sName+":INNER" + Math.floor(Math.random()*1000)
+	var lo = new LiveObject(
+		scope.sName+":INNER" + Math.floor(Math.random()*1000), true
 	);
 
 	each(jq.get(),function(e,n){
-		scopeInner.defvar(n,ffjqCompileElement(scope, $(e)));
+		lo.push(ffjqCompileElement(scope, $(e)));
 	});
 
-	var c=jq.length;
+	var c = jq.length;
 
-	var fOut = function(){
-    var ve=[];
-		for (var n=0; n<c; n++){
-			var jqInner = scopeInner.getvar(n);
-			ve = ve.concat(jqInner.get());
+	var fOut = (
+		c === 1
+			? function(){ return lo[0]; }
+		: function(){
+			var ve=[];
+			for (var n=0; n<c; n++){
+				var jqInner = lo[n];
+				if (!(jqInner instanceof $)){
+					D("NOT JQ",c,jqInner);
+					jqInner = fjqText(jqInner);
+				}
+				ve = ve.concat(jqInner.get());
+			}
+			return $(ve);
 		}
-		return $(ve);
-	};
+	);
+
 	
 
 	fOut.fRecompile = function(){
@@ -507,6 +483,6 @@ var nsSilk = {};
 // ---------------------------------------------------------------------------
 nsSilk.compile = ffjqCompileElements;
 nsSilk.fSafeSwapContents = fSafeSwapContents;
-nsSilk.fLiveExpression = fLiveExpression;
+nsSilk.ffxLiveExpression = ffxLiveExpression;
 
 module.exports = nsSilk;

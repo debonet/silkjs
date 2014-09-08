@@ -152,8 +152,6 @@ describe("standardlibrary", function(){
 			"<defmacro name='x'>aa{{_._inner}}bb</defmacro>"
 				+ "<x>THIS<a>GOES</a>HERE</x>",
 			"aaTHIS<a>GOES</a>HEREbb",
-
-
 		]);
 	});
 

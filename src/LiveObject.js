@@ -7,7 +7,7 @@ var ffBind = require("./ffBind");
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-var LiveObject = function(s, loParent, bArray){
+var LiveObject = function(s, bArray, loParent){
 	this.sName = s;
 	this.loParent = loParent;
 	this.vloChildren = [];
@@ -48,7 +48,6 @@ var LiveObject = function(s, loParent, bArray){
 
 
 LiveObject.prototype.push = function(x){
-	D("PUSHME",x);
 	this.fDirty();
 	this.xlv.push(new LiveValue(this.sName+"[]",x));
 	this.fAddAccess(this.xlv.length-1);
@@ -100,7 +99,7 @@ LiveObject.prototype.splice = function(){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDirty = function(){   
-	D("DIRTYOBJ",this.sName);
+//	D("DIRTYOBJ",this.sName);
   this.vlvListeners.forEach(function(lvListener){
     lvListener.fDirty();
   });

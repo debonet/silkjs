@@ -126,7 +126,7 @@ GlobalSilk.parseHTML = function(shtml){
 // --------------------------------------------------------------------
 GlobalSilk.setContents = nsSilk.fSafeSwapContents;
 GlobalSilk.compile = nsSilk.compile;
-GlobalSilk.expression = nsSilk.fLiveExpression;
+GlobalSilk.expression = nsSilk.ffxLiveExpression;
 GlobalSilk.Scope = Scope;
 
 
