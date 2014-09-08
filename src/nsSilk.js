@@ -122,10 +122,10 @@ var fDefCode = function(scope,jq, sfDefine){
 
 	//D("DEFINING",scope.sName,sfDefine,sName);
 
-	var afClosure = {};
+	var afxAttributes = {};
 	each(aAttr, function(sVal, sVar){
 		// we allow the argument to be an expression
-		afClosure[sVar]=ffxInterpolateString(scope,sVal);
+		afxAttributes[sVar]=ffxInterpolateString(scope,sVal);
 	});
 
 
@@ -150,16 +150,14 @@ var fDefCode = function(scope,jq, sfDefine){
 
 	scope[sfDefine](
 		sName,
-		function(){
-			return function(scopeIn,jqIn,jq){
-				// arguments
-				each(afClosure, function(fClosure, sVar){
-					if (!scopeIn.localvar(sVar)){
-						scopeIn.defvar(sVar, fClosure);
-					}
-				});
-				return f(scopeIn,jqIn);
-			}
+		function(scopeIn,jqIn,jq){
+			// arguments
+			each(afxAttributes, function(fClosure, sVar){
+				if (!scopeIn.localvar(sVar)){
+					scopeIn.defvar(sVar, fClosure);
+				}
+			});
+			return f(scopeIn,jqIn);
 		}
 	);
 };
@@ -226,25 +224,23 @@ var fDefMacro = function(scope, jq){
 
 
 //	D("DEFINING MACRO " + sName + " IN SCOPE " + scope.sName);
-	scope.defelt(sName, function(){
-		return function(scopeIn, jqIn){
-			var aAttrCall = faAttributes(jqIn);
-			each(aAttr, function(sVal, sVar){
-				if (!(sVar in aAttrCall)){
-					scopeIn.defvar(sVar, ffxInterpolateString(scope,sVal));
-				}
-			});
-			each(aAttrCall, function(sVal, sVar){
-				scopeIn.defvar(sVar, ffxInterpolateString(scopeIn.parent,sVal));
-			});
-			// make sure to clone contents as the macro can be called 
-			// multiple times
-			var f = nsSilk.compile(scopeIn, jq.contents().clone(true));
-			return function(){
-				var jqOut = f();
-				return jqOut;
+	scope.defelt(sName, function(scopeIn, jqIn){
+		var aAttrCall = faAttributes(jqIn);
+		each(aAttr, function(sVal, sVar){
+			if (!(sVar in aAttrCall)){
+				scopeIn.defvar(sVar, ffxInterpolateString(scope,sVal));
+			}
+		});
+		each(aAttrCall, function(sVal, sVar){
+			scopeIn.defvar(sVar, ffxInterpolateString(scopeIn.parent,sVal));
+		});
+		// make sure to clone contents as the macro can be called 
+		// multiple times
+		var f = nsSilk.compile(scopeIn, jq.contents().clone(true));
+		return function(){
+			var jqOut = f();
+			return jqOut;
 
-			};
 		};
 	});
 };
@@ -336,6 +332,9 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 	}
 
 
+
+	D("INTERP",s,scope.sName);
+
 	var vve=[];
 	return function(){
 		var veOut=[];
@@ -389,7 +388,6 @@ var ffjqCompileElements = function(scope, jq){
 	);
 
 	each(jq.get(),function(e,n){
-
 		scopeInner.defvar(n,ffjqCompileElement(scope, $(e)));
 	});
 

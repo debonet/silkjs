@@ -76,66 +76,6 @@
 
 
 	<!-- -------------------------------------- -->
-	<defmacro name="monthlyview" tm="" events="{{ [] }}">
-
-		<defmacro name="monthviewdayblank">
-			<div class="monthly-cell blank"></div>
-		</defmacro>
-		
-		<defmacro name="monthviewday" day="" events="{{[]}}">
-			<div class="monthly-cell">
-				{{_.day}}
-				<foreach items="{{_.events}}" as="event">
-					<div>
-						{{_.fsTimeForTm(_.event["tm"])}} - {{_.event["summary"]}}
-					</div>
-				</foreach>
-			</div>
-		</defmacro>
-		
-		<let
-				startdow="{{_.fcFirstDOWOfMonth(_.tm)}}"
-				days="{{_.fcDaysInMonth(_.tm)}}"
-			>
-			<let weeks="{{ Math.ceil((_.startdow + _.days)/7) }}">
-				<div class="monthly">
-					<repeat times="{{_.weeks}}" indexby="week">
-						<div class="monthly-row">
-							<repeat times="7" indexby="dow">
-								<let 
-										calbox="{{_.week * 7 + _.dow}}"
-										day="{{_.week * 7 + _.dow - _.startdow + 1}}"
-									>
-									<switch>
- 										<case test="{{ _.calbox &lt; _.startdow}}">
-											<monthviewdayblank></monthviewdayblank>
-										</case>
-										<case test="{{ _.calbox &gt;= (_.days + _.startdow)}}">
-											<monthviewdayblank></monthviewdayblank>
-										</case>
-										<case>
-											<monthviewday 
-													events="{{ _.faFilterByDate(
-													_.events, 
-													_.ftmDayOfMonth(_.tm,_.day-1),	
-													_.ftmDayOfMonth(_.tm,_.day) 
-													) }}"
-													day="{{_.day}}"
-												>
-											</monthviewday>
-										</case>
-
-									</switch>
-								</let>
-							</repeat>
-						</div>
-					</repeat>
-				</div>
-			</let>
-		</let>
-	</defmacro>
-
-
 	<defelt name="monthlyview2" tm="" events="{{ [] }}" onclick="{{_.__identity__}}">
 		return function(){
 			var startdow=_.fcFirstDOWOfMonth(_.tm);
@@ -199,40 +139,6 @@
 		</if>
 	</defmacro>
 
-	<!-- -------------------------------------- -->
-	<defelt name="dynamic" element="div">
-		var fOut;
-		var sElement;
-		return function(){
-			if (sElement !== _.element){
-				var jqOut = $("<" + _.element + "></" + _.element + ">");
-				sElement = _.element;
-
-				each(_._attributes,function(s){
-					if (s!=="element"){
-						jqOut.attr(s,_[s]);
-					}
-				});
-				fOut = Silk.compile(scope,jqOut);
-			}
-			return fOut();
-		}
-	</defelt>
-
-	<!-- -------------------------------------- -->
-	<defattr name="passattr">
-		return function(jqInstance){
-			var vs=_.passattr;
-			if (vs instanceof String){
-				vs=vs.split(/[\s,]+/);
-			}
-			each(vs, function(s){
-				jqInstance.attr(s,_[s]);
-			});
-			jqInstance.attr("passattr",null);
-			return jqInstance;
-		}
-	</defattr>
 	
 	<!-- -------------------------------------- -->
 	<defmacro name="question" label="" element="input">

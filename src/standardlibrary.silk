@@ -214,3 +214,39 @@
 		return jqInstance;
 	};
 </defattr>
+
+
+<!-- -------------------------------------- -->
+<defelt name="dynamic" element="div">
+	var fOut;
+	var sElement;
+	return function(){
+		if (sElement !== _.element){
+			var jqOut = $("<" + _.element + "></" + _.element + ">");
+			sElement = _.element;
+
+			each(_._attributes,function(s){
+				if (s!=="element"){
+					jqOut.attr(s,_[s]);
+				}
+			});
+			fOut = Silk.compile(scope,jqOut);
+		}
+		return fOut();
+	}
+</defelt>
+
+<!-- -------------------------------------- -->
+<defattr name="passattr">
+	return function(jqInstance){
+		var vs=_.passattr;
+		if (vs instanceof String){
+			vs=vs.split(/[\s,]+/);
+		}
+		each(vs, function(s){
+			jqInstance.attr(s,_[s]);
+		});
+		jqInstance.attr("passattr",null);
+		return jqInstance;
+	}
+</defattr>

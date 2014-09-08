@@ -73,7 +73,7 @@ LiveValue.prototype.fSet = function(x){
 LiveValue.prototype.fDirty = function(){	
 	// if we weren't already dirty we are now 
 	if (!this.bDirty){
-//		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
+		D("MARKING DIRTY", this.sName, "----------------------------------", this.vlvListeners.length);
 
 		if (this.fCallbackDirty){
 			this.fCallbackDirty();

@@ -6,8 +6,7 @@ module.exports = function(scope){
 	var scopeInclude = new Silk.Scope("include");
 
 	// ------------------------------------------------------------------------
-	scope.defelt("include", function(){
-		return function(scope,jq){
+	scope.defelt("include", function(scope,jq){
 			var fjq;
 			return function(){
 				var _ = scope._;
@@ -35,7 +34,21 @@ module.exports = function(scope){
 
 				return fjq();
 			};
-		};
+	});
+
+	// ------------------------------------------------------------------------
+	scope.defelt("controller", function(scope,jq){
+			var bInstalled;
+			return function(){
+				var sModule = scope._.module
+				if (!bInstalled){
+					bInstalled = true;
+					var ffjq = Silk.ffjqModule(sModule);
+					ffjq(scope,jq);
+					scope.recompilevar('_inner');
+				}
+				return scope._._inner;
+			}
 	});
 
 };

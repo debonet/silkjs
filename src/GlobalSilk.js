@@ -69,20 +69,6 @@ GlobalSilk.init = function(fRender, bSkipStdLib){
 };
 
 // --------------------------------------------------------------------
-GlobalSilk.cleanHTML = function(shtml){
-	shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
-  shtml = shtml.replace(/<\/defelt>/g,"</script>");
-	
-	shtml = shtml.replace(/<defun/g,"<script type='defun'");
-  shtml = shtml.replace(/<\/defun>/g,"</script>");
-	
-	shtml = shtml.replace(/<defattr/g,"<script type='defattr'");
-  shtml = shtml.replace(/<\/defattr>/g,"</script>");
-
-	return shtml;
-},
-
-// --------------------------------------------------------------------
 GlobalSilk.fGet = (
 	typeof window !== 'undefined' 
 		?  function(sUrl, fCallback){
@@ -105,6 +91,32 @@ GlobalSilk.fGet = (
 	}
 );
 
+
+// --------------------------------------------------------------------
+GlobalSilk.affjqModules = {};
+GlobalSilk.fDefineModule = function(s,ffjq){
+	GlobalSilk.affjqModules[s] = ffjq;
+};
+
+GlobalSilk.ffjqModule = function(s){
+	return GlobalSilk.affjqModules[s];
+};
+
+
+
+// --------------------------------------------------------------------
+GlobalSilk.cleanHTML = function(shtml){
+	shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
+  shtml = shtml.replace(/<\/defelt>/g,"</script>");
+	
+	shtml = shtml.replace(/<defun/g,"<script type='defun'");
+  shtml = shtml.replace(/<\/defun>/g,"</script>");
+	
+	shtml = shtml.replace(/<defattr/g,"<script type='defattr'");
+  shtml = shtml.replace(/<\/defattr>/g,"</script>");
+
+	return shtml;
+};
 
 // --------------------------------------------------------------------
 GlobalSilk.parseHTML = function(shtml){

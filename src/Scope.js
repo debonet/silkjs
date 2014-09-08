@@ -95,7 +95,7 @@ Scope.prototype.setvar = function(s,x){
 
 // element methods
 Scope.prototype.defelt = function(s,x){
-	return this.loElements.fDefine(s,x);
+	return this.loElements.fDefine(s,function(){return x;});
 };
 
 Scope.prototype.checkelt = function(s){
@@ -124,7 +124,7 @@ Scope.prototype.setelt = function(s,x){
 
 // attribute methods
 Scope.prototype.defattr = function(s,x){
-	return this.loAttributes.fDefine(s,x);
+	return this.loAttributes.fDefine(s,function(){return x;});
 };
 
 Scope.prototype.checkattr = function(s){
