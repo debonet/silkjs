@@ -142,9 +142,7 @@
 <defattr name="click">
 	return function(jqInstance){
 		if (!jqInstance.data("sk-click")){
-			D("BINDING CLICK");
 			jqInstance.on("click", function(){
-				D("DOING CLICK",_.click,scope.sName);
 				eval(_.click);
 			});
 			jqInstance.data("sk-click",true);

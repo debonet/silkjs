@@ -1,7 +1,15 @@
 VividJS
 ======
 
-VividJS is a web MV* framework. Inspired by the promise of AngluarJS, but turned off by its rough edges, the vividJS attempts to provide smooth and graceful framework for web application development.
+At a superficial level, VividJS is one more web MVC framework, but
+really what VividJS represents is an entirely new web developemnt paradigm.
+
+VividJS is inspired by the promise of such advances as AngluarJS,
+BackboneJS and Meteorjs, but made simple. We've done this by
+effectively constructing an entirely new meta language (that sits
+compatibly atop JS and HTML). Imagine developing web apps with in HTML
+but with the power of Lisp, including Scoping, closures, and macros,
+combined with the automatic coherence of systems like Prolog.
 
 
 Status
@@ -9,14 +17,76 @@ Status
 
 This project began on 8/15/2014, so we're just getting started. Stay tuned for more!
 
-What can VividJS do for me?
-------------------------
 
-How about this!
+New Paradigm
+------------
+
+Imagine writing a complex web application, such as Microsoft Word or Google Docs, but being 
+able to do it like this:
+
 
 ~~~html
 
-<defmacro name="studentrow" student="some body" grade="n/a">
+<menu>
+	<menuitem label="file">
+		<menuaction label="load" onchoose='DoLoadFile'></menuaction>
+		<menuaction label="save" onchoose='DoSaveFile'></menuaction>
+		...
+	</menuitem>
+	<menuitem label="edit">
+		<menuaction label="copy" onchoose='DoCopy'></menuaction>
+		<menuaction label="paste" onchoose='DoPaste'></menuaction>
+		...
+	</menuitem>
+</menu>
+
+<ribbon>
+	<button label="enlargefont" onchoose="DoEnlargeFont" icon="EnlargeFont.png"></button>
+	<choosefont></choosefont>
+	...
+</ribbon>
+
+etc.
+~~~
+
+
+What do all those new elements like `<menu>`, `<menuitem>`, `<ribbon>` mean?
+They are new elements defined within Vivid. 
+
+But now, the creation of the element that implements the `<menu>` for
+example can be developed independently from your application. It could
+be created by another team and more importantly it can be updated
+independently of of your application.
+
+This is nothing new in the traditional application world. The various
+versions of Microsoft Windows for example, defines all kinds of
+controls (including menus), which can be shared and leveraged across
+many applications.  
+
+In the web world this tended to be a lot harder, until now.
+
+Some details
+------------
+
+* VividJS is about 8K when minified and compressed.
+
+* Currently VividJS uses jQuery, though that decision may change in the near future
+
+* Browser compatibility: confirmed under Chrome, Firefox, Safari. Internet Explorer compatibility unknown
+
+
+Sounds interesting. Can you show me some examples?
+--------------------------------------------------
+
+Let's get a little more concrete. One way to construct new elements is with a 
+simple macro. When called macros replace themselves with new contents based on their
+definiton.
+
+
+
+~~~html
+
+<defmacro name="studentrow" student="some name" grade="n/a">
 	<tr>
 		<td>
 			Student: {{_.student}}
@@ -24,12 +94,15 @@ How about this!
 		<td>
 			Grade: {{_.grade}}
 		</td>
+		<td>
+			Comments: {{_.inner}}
+		</td>
 	</tr>
 </defmacro>
 
 <table>
-	<studentrow student="Bob Smith" grade="A+" />
-	<studentrow student="John Doe" grade="B-" />
+	<studentrow student="Bob Smith" grade="A+">Great Kid</studentrow>
+	<studentrow student="John Doe" grade="B-">Needs help</studentrow>
 </table>
 
 ~~~
@@ -59,6 +132,7 @@ yields:
 </table>
 
 ~~~
+
 
 
 
@@ -139,7 +213,7 @@ They are constructs that can easily and trivially be written within Vivid itself
 ~~~js
 
 <!-- foreach element -->
-<defelt name="foreach" items="{{[]}}" as="_item" indexby="_index">
+<defelt name="foreach" items="{{[]}}" as="item" indexby="_index">
 	var ascope = {};
 	var scopeInner = new Scope();
 
@@ -346,15 +420,270 @@ constructs:
 ~~~html
 <let mytab="{{3}}">
 	<tabs chosen="mytab" class="mytabclass">
-		<foreach items='{{ ["foo", "bar", "baz", "bing', "bop"] }}'>
-			<tab label="{{_._item}}">
-				Contents for tab {{_._item}}
+		<foreach items='{{ ["foo", "bar", "baz", "bing', "bop"] }}' as="item">
+			<tab label="{{_.item}}">
+				Contents for tab {{_.item}}
 			</tab>
 		</foreach>
 	</tabs>
 
 	You've selected {{_.mytab}}
 </let>
+~~~
+
+
+
+
+Tell me about Scopes
+--------------------
+
+A key aspect of a programming language that can be used to develop large projects is 
+the ability to encapsulate functionality. VividJS makes extensive use of scoping and lexical 
+closure to ensure that functionality stays put, and only interfaces and not implemation 
+details are exposed.
+
+At every html element a new scope is formed and each scope derives from the scope if it's 
+parent in the expected way.
+
+~~~html
+<outerElt a='outer' b='outer'>
+	the value of a is {{_.a}}
+	the value of b is {{_.b}}
+	<innerElt a='inner'>
+		the value of a is {{_.a}}
+		the value of b is {{_.b}}
+	</innerElt>
+	the value of a is {{_.a}}
+	the value of b is {{_.b}}
+</outerElt>
+~~~
+
+will produce:
+
+~~~html
+<outerElt a='outer'>
+	the value of a is outer
+	the value of b is outer
+	<innerElt a='inner'>
+		the value of a is inner
+		the value of b is outer
+	</innerElt>
+	the value of a is outer
+	the value of b is outer
+</outerElt>
+~~~
+
+Note how the value of `a` changes within the `<innerElt>`, but is consistent within 
+the `outerElt` scope. Since the value of `b` was not changed by `<innerElt>` it has the same
+value throughout.
+
+And closures?
+-------------
+
+When a new scope is defined, computed values are taken from the enclosing scope, as in this example:
+
+~~~html
+
+<outerElt a='{{1}}'>
+	the value of a is {{_.a}}
+	<innerElt a='{{_.a+1}}'>
+		the value of a is {{_.a}}
+	</innerElt>
+	the value of a is {{_.a}}
+</outerElt>
+~~~
+
+yields
+
+~~~html
+
+<outerElt a='1'>
+	the value of a is 1
+	<innerElt a='2'>
+		the value of a is 2
+	</innerElt>
+	the value of a is 1
+</outerElt>
+~~~
+
+
+What about live values?
+-----------------------
+
+Suppose we extended our example above to:
+
+
+~~~html
+
+<defelt name='set'>
+	return function(){
+		scope.parent[_.var] = [_.val];
+		return $();
+	}
+<defelt>
+
+<outerElt a='{{1}}'>
+	the value of a is {{_.a}}
+	<innerElt a='{{_.a+1}}'>
+		the value of a is {{_.a}}
+	</innerElt>
+	the value of a is {{_.a}}
+	
+	<set var='a' val='{{3}}'></set>
+</outerElt>
+~~~
+
+would actually yield:
+
+~~~html
+
+<outerElt a='3'>
+	the value of a is 3
+	<innerElt a='4'>
+		the value of a is 4
+	</innerElt>
+	the value of a is 3
+</outerElt>
+~~~
+
+
+Notice how the value of `a`, when changed, is automatically made
+consistent throughout it`s usage, with all dependencies being
+automatically computed. 
+
+Of course, the above example isn't really sensible. A more realistic example might be:
+
+~~~html
+
+<outerElt a='{{1}}'>
+	the value of a is {{_.a}}
+	<innerElt a='{{_.a+1}}'>
+		the value of a is {{_.a}}
+	</innerElt>
+	the value of a is {{_.a}}
+	
+	<button click='_.a = 3'>Click Me</button>
+</outerElt>
+~~~
+
+which would yield 1,2,1 before the button is clicked and 1,3,1 after.
+
+
+Encapsulation
+-------------
+
+Bundles of functionaliy can be packaged up into separate VividJS
+files. By convention we use the extension '.vjs'.  Files can be included using 
+the `<include>` element. Here's a simple example:
+
+Footer.vjs:
+~~~html
+<defmacro name="footer" author="">
+	<hr/>
+	This page was written by {{_.author}}
+</defmacro>
+~~~
+
+
+index.html
+~~~html
+
+<html>
+	<head>
+		<script src="jquery.min.js"></script>
+		<script src="vivid.js"></script>
+	</head>
+	<body style='visibility:hidden'>
+	
+		<div>
+			<include url="Footer.vjs">Loading...</include>
+		
+			These are the page contents, blah blah blah.
+		
+			<footer author="me, myself and I"></footer>
+		</div>
+	</body>
+</html>
+	
+Note however, that the `<include>` directive is fully scoped, and so
+the definition of `<footer>` only exists within the `<div>`
+element. Alternative definitions of footer could be created outside
+that scop, or within child scopes.
+
+
+
+Models and Controllers
+----------------------
+
+As you can see VividJS does a great job of allowing you to package up
+Views and View Logic. In web-app development, that is a huge part of the battle.
+
+It can also be quite advantageous to have controllers and models respect the scoping 
+and encapsulation rules. Unlike AngularJS, in VividJS, controllers and models can be
+bound to a specific scope (and all child scopes, unless alternately defined).
+
+Here's an example:
+
+myModel.js
+~~~js
+	Vivid.defineModule('myModel', function(scope,jq){
+		scope.defvar("username","bob");
+	});
+~~~
+
+myController.js
+~~~js
+	Vivid.defineModule('myController', function(scopeOuter,jqOuter){
+		scope.defun("writeuser",function(scope,jq){
+			var _=scope._;
+			_.status = "writing...";
+			$.ajax({
+				url         : sResource,
+				data        : _.username,
+				type        : "POST",
+				success     : function(){ _.status = "success"; },
+				error  		: function(){ _.status = "error";	}
+			});
+		});
+	}
+~~~
+
+myApp.vjs
+~~~html
+	<usemodule module="myModel">
+		<h1> Hello {{_.username}}</h1>
+
+		Change your name: <input model="username">
+		
+		<usemodule module="myController">
+			<button click="writeuser()">Save Changes</button>
+		</usemodule>
+	</usemodule>
+~~~
+
+
+
+Installation and usage
+----------------------
+
+When used within a browser, simply add the lines:
+
+~~~html
+		<script src="jquery.min.js"></script>
+		<script src="vivid.js"></script>
+~~~
+
+Also, we recommend adding `style="visibility:hidden"` to your `<body>`
+element to prevent any undesireable flashes of uninterpreted VividJS
+code.
+
+
+
+There is also a command line tool called runvivid.js that can be 
+invoked by:
+
+~~~
+	node runvivid.js myVividFile.vjs
 ~~~
 
 

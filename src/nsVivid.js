@@ -76,7 +76,7 @@ var ffjqPassthrough = function(scope,jq){
 			if (sVal instanceof $){
 				sVal = sVal.text();
 			}
-			if (!(sVal instanceof String)){
+			if (typeof(sVal)!=='string'){
 				sVal = null;
 			}
 			jq.attr(sVar, sVal);

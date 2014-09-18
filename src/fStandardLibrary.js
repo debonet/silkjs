@@ -37,7 +37,7 @@ module.exports = function(scope){
 	});
 
 	// ------------------------------------------------------------------------
-	scope.defelt("controller", function(scope,jq){
+	scope.defelt("usemodule", function(scope,jq){
 			var bInstalled;
 			return function(){
 				var sModule = scope._.module
