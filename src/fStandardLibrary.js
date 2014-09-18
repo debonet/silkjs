@@ -1,9 +1,9 @@
-var Silk = require("./GlobalSilk");
+var Vivid = require("./GlobalVivid");
 var D = require("./fDebugOutput");
 
 module.exports = function(scope){
 
-	var scopeInclude = new Silk.Scope("include");
+	var scopeInclude = new Vivid.Scope("include");
 
 	// ------------------------------------------------------------------------
 	scope.defelt("include", function(scope,jq){
@@ -14,10 +14,10 @@ module.exports = function(scope){
 				if (!scopeInclude.checkvar(_.url)){
 					scopeInclude.defvar(_.url, _._inner);
 
-					Silk.fGet(_.url, function(err,sData){
+					Vivid.fGet(_.url, function(err,sData){
 						scopeInclude.setvar(
 							_.url, 
-							Silk.parseHTML(sData)
+							Vivid.parseHTML(sData)
 						);
 
 						fjq = null;
@@ -26,7 +26,7 @@ module.exports = function(scope){
 					});
 				}
 				if (!fjq){
-					fjq = Silk.compile(
+					fjq = Vivid.compile(
 						scope.parent, 
 						scopeInclude.getvar(_.url).clone()
 					);
@@ -43,7 +43,7 @@ module.exports = function(scope){
 				var sModule = scope._.module
 				if (!bInstalled){
 					bInstalled = true;
-					var ffjq = Silk.ffjqModule(sModule);
+					var ffjq = Vivid.ffjqModule(sModule);
 					ffjq(scope,jq);
 					scope.recompilevar('_inner');
 				}

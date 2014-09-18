@@ -1,7 +1,7 @@
-SilkJS
+VividJS
 ======
 
-SilkJS is a web MV* framework. Inspired by the promise of AngluarJS, but turned off by its rough edges, the SilkJS attempts to provide smooth and graceful framework for web application development.
+VividJS is a web MV* framework. Inspired by the promise of AngluarJS, but turned off by its rough edges, the vividJS attempts to provide smooth and graceful framework for web application development.
 
 
 Status
@@ -9,7 +9,7 @@ Status
 
 This project began on 8/15/2014, so we're just getting started. Stay tuned for more!
 
-What can silk do for me?
+What can VividJS do for me?
 ------------------------
 
 How about this!
@@ -107,7 +107,7 @@ How about this instead:
 
 But where do you ask do `<let>` and `<if>` and `<foreach>` come from?
 
-They are constructs that can easily and trivially be written within Silk itself!
+They are constructs that can easily and trivially be written within Vivid itself!
 
 
 ~~~html
@@ -139,7 +139,7 @@ They are constructs that can easily and trivially be written within Silk itself!
 ~~~js
 
 <!-- foreach element -->
-<defelt scope="_" name="foreach" items="[]" as="_item" indexby="_index">
+<defelt name="foreach" items="{{[]}}" as="_item" indexby="_index">
 	var ascope = {};
 	var scopeInner = new Scope();
 
@@ -159,23 +159,22 @@ They are constructs that can easily and trivially be written within Silk itself!
 		// create new, if needed
 		each(a,function(x,s){
 			if (!(s in ascope)){
-				ascope[s] = scope.clone();
-				ascope[s].defvar(_.as, scope.expr("_.items[" + s + "]"));
+				ascope[s] = new Scope("FOREACH:"+s,scope);
+				ascope[s].defvar(_.as, Vivid.expression(scope, "_.items['" + s + "']"));
+				ascope[s].defvar(_.as, _.items[s]);
 				ascope[s].defvar(_.indexby,s);
-				scopeInner.defvar(s,compile(ascope[s],jq.contents().clone()));
+				scopeInner.defvar(s, Vivid.compile(ascope[s],jq.contents().clone()));
 			}
 		});
 
 		// eval and add
 		var ve = [];
 		each(a,function(x,s){
-				ve = ve.concat(scopeInner._[s].get());
+			ve = ve.concat(scopeInner._[s].get());
 		});
 		return $(ve);
 	};
 </defelt>
-~~~
-
 
 
 
@@ -256,7 +255,6 @@ You bet! Take a look at this:
 	return function(jqInstance){
 		jqInstance.on("input", function(){
 			scope.parent.setvar(sVar, $(this).val());
-			Silk.digest();
 			jqInstance.focus();
 		});
 		
@@ -264,8 +262,8 @@ You bet! Take a look at this:
 	}
 </defattr>
 
-<let val="initial value" prompt="Type something bozo!">
-	<input watch="val" placeholder="{{_.prompt}}">
+<let val="initial value">
+	<input watch="val">
 	<br />
 	You typed: {{_.val}} 
 </let>
@@ -312,7 +310,7 @@ And have it do the obvious thing. You can. Tabs can be defined programatically w
 			jqOut.append(jqTab)
 		}
 
-		jqOut.append(jqTabs.eq(_[_.chosen]).contentes());
+		jqOut.append(jqTabs.eq(_[_.chosen]).contents());
 
 		return jqOut;
 	}

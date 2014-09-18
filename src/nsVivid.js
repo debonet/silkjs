@@ -33,9 +33,12 @@ var faAttributes = function(jq){
 // node which we still need. detach and reattach
 // loses focus. remove wipes handlers
 var fSafeSwapContents = function(jq, jqNew){
+	if (!(jqNew instanceof $)){
+		jqNew = fjqText(jqNew);
+	}
 
 	var eParent = jq.get(0);
-	var veNew = jqNew.get();
+	var veNew =  jqNew.get();
 	var jqOld = jq.contents();
 	var veOld = jqOld.get();
 
@@ -72,6 +75,9 @@ var ffjqPassthrough = function(scope,jq){
 			var sVal = scope._[sVar];
 			if (sVal instanceof $){
 				sVal = sVal.text();
+			}
+			if (!(sVal instanceof String)){
+				sVal = null;
 			}
 			jq.attr(sVar, sVal);
 		});
@@ -238,7 +244,7 @@ var fDefMacro = function(scope, jq){
 		});
 		// make sure to clone contents as the macro can be called 
 		// multiple times
-		var f = nsSilk.compile(scopeIn, jq.contents().clone(true));
+		var f = nsVivid.compile(scopeIn, jq.contents().clone(true));
 		return function(){
 			var jqOut = f();
 			return jqOut;
@@ -286,7 +292,7 @@ var ffxLiveExpression = function(scope, x){
 
 // ---------------------------------------------------------------------------
 var fjqText = function(s){
-	return Silk.parseHTML(""+s);
+	return Vivid.parseHTML(""+s);
 };
 
 var reInterpolate = /\{\{([\s\S]*?)\}\}/gm;
@@ -297,9 +303,7 @@ var ffxInterpolateString = function(scope,s,bForceJq){
 	}
 
 
-	var lo = new LiveObject(
-		scope.sName+":TEXTINNER" + Math.floor(Math.random()*1000), true
-	);
+	var lo = new LiveObject(scope.sName+":TEXTINNER", true);
 
 	var n = 0;
 	var aMatch;
@@ -350,9 +354,7 @@ var ffjqEvalTextElement = function(scope,jqScript){
 // ---------------------------------------------------------------------------
 var ffjqCompileElements = function(scope, jq){
 
-	var lo = new LiveObject(
-		scope.sName+":INNER" + Math.floor(Math.random()*1000), true
-	);
+	var lo = new LiveObject(scope.sName+":INNER", true);
 
 	each(jq.get(),function(e,n){
 		lo.push(ffjqCompileElement(scope, $(e)));
@@ -368,7 +370,6 @@ var ffjqCompileElements = function(scope, jq){
 			for (var n=0; n<c; n++){
 				var jqInner = lo[n];
 				if (!(jqInner instanceof $)){
-					D("NOT JQ",c,jqInner);
 					jqInner = fjqText(jqInner);
 				}
 				ve = ve.concat(jqInner.get());
@@ -436,10 +437,7 @@ var ffjqCompileElement = function(scopeIn,jqScript){
 	}
 
 	// elements
-	var scope = new Scope(
-		scopeIn.sName + "." + sElement + Math.floor(Math.random()*1000),
-		scopeIn
-	);
+	var scope = new Scope(scopeIn.sName + "." + sElement, scopeIn);
 
 	var bKnownElement = scopeIn.checkelt(sElement);
 
@@ -478,11 +476,11 @@ var ffjqCompileElement = function(scopeIn,jqScript){
 
 
 
-var nsSilk = {};
+var nsVivid = {};
 
 // ---------------------------------------------------------------------------
-nsSilk.compile = ffjqCompileElements;
-nsSilk.fSafeSwapContents = fSafeSwapContents;
-nsSilk.ffxLiveExpression = ffxLiveExpression;
+nsVivid.compile = ffjqCompileElements;
+nsVivid.fSafeSwapContents = fSafeSwapContents;
+nsVivid.ffxLiveExpression = ffxLiveExpression;
 
-module.exports = nsSilk;
+module.exports = nsVivid;

@@ -1,4 +1,4 @@
 test:
-	cd ..;	mocha -C -R tap
+	cd ..; make test
 
 .PHONY: test

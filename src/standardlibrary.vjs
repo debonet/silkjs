@@ -86,7 +86,7 @@
 		for (n=vscope.length; n < c; n++){
 			vscope[n] = new Scope("repeat"+n,scope);
 			vscope[n].defvar(_.indexby, n);
-			scopeInner.defvar(n, Silk.compile(vscope[n],jq.contents().clone()));
+			scopeInner.defvar(n, Vivid.compile(vscope[n],jq.contents().clone()));
 		}
 
 		// eval and add
@@ -120,10 +120,10 @@
 		each(a,function(x,s){
 			if (!(s in ascope)){
 				ascope[s] = new Scope("FOREACH:"+s,scope);
-				ascope[s].defvar(_.as, Silk.expression(scope, "_.items['" + s + "']"));
+				ascope[s].defvar(_.as, Vivid.expression(scope, "_.items['" + s + "']"));
 				ascope[s].defvar(_.as, _.items[s]);
 				ascope[s].defvar(_.indexby,s);
-				scopeInner.defvar(s, Silk.compile(ascope[s],jq.contents().clone()));
+				scopeInner.defvar(s, Vivid.compile(ascope[s],jq.contents().clone()));
 			}
 		});
 
@@ -230,7 +230,7 @@
 					jqOut.attr(s,_[s]);
 				}
 			});
-			fOut = Silk.compile(scope,jqOut);
+			fOut = Vivid.compile(scope,jqOut);
 		}
 		return fOut();
 	}

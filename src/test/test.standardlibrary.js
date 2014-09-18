@@ -1,5 +1,5 @@
-global.Silk = require("../GlobalSilk");
-var nsSilk = require("../nsSilk");
+global.Vivid = require("../GlobalVivid");
+var nsVivid = require("../nsVivid");
 var Scope = require("../Scope");
 var assert = require("assert");
 var fCreateDom = require("jsdom").env;
@@ -18,9 +18,9 @@ var m = function(f){
 
 
 // -------------------------------------------------------------------------
-var fCompareSilkOutput = function(shtml, shtmlDesired){
-	var scope = new Scope("test",Silk.scope);
-	var jqOut = nsSilk.compile(scope,$(shtml))();
+var fCompareVividOutput = function(shtml, shtmlDesired){
+	var scope = new Scope("test",Vivid.scope);
+	var jqOut = nsVivid.compile(scope,$(shtml))();
 	var shtmlOut = $("<div></div>").append(jqOut).html();
 
 	assert.equal(
@@ -32,7 +32,7 @@ var fCompareSilkOutput = function(shtml, shtmlDesired){
 
 var fBulkCompare = function(vs){
 	for (var n=0,c=vs.length; n<c; n+=2){
-		fCompareSilkOutput(vs[n],vs[n+1]);
+		fCompareVividOutput(vs[n],vs[n+1]);
 	}
 };
 
@@ -48,7 +48,7 @@ describe("standardlibrary", function(){
 				// the browsers version of window.$
 				global.$ = require('jquery')(window);
 
-				Silk.fLoadStandardLibrary(Silk.scope, function(){
+				Vivid.fLoadStandardLibrary(Vivid.scope, function(){
 					fCallback(null);
 				});
 			}

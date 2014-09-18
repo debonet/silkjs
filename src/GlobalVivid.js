@@ -1,9 +1,9 @@
-var nsSilk = require("./nsSilk.js");
+var nsVivid = require("./nsVivid.js");
 var Scope = require("./Scope");
-var GlobalSilk={};
+var GlobalVivid={};
 
 // --------------------------------------------------------------------
-GlobalSilk.scope = new Scope("global");
+GlobalVivid.scope = new Scope("global");
 
 // --------------------------------------------------------------------
 var cIteration = 0;
@@ -19,12 +19,12 @@ var ffOnDirty = function(fCallback){
 
 			timeoutDraw = setTimeout(function(){
 				timeoutDraw = undefined;
-				var jq = Silk.scope._._inner;
-				if (Silk.scope.loVariables.fbIsDirty("_inner")){
+				var jq = Vivid.scope._._inner;
+				if (Vivid.scope.loVariables.fbIsDirty("_inner")){
 					return;
 				}
 
-				Silk.scope.loVariables.fCheckHonesty();
+				Vivid.scope.loVariables.fCheckHonesty();
 
 				cIteration = 0;
 				fCallback(null, jq);
@@ -35,22 +35,22 @@ var ffOnDirty = function(fCallback){
 };
 
 // --------------------------------------------------------------------
-GlobalSilk.fLoadStandardLibrary = function(scope,fCallback){
+GlobalVivid.fLoadStandardLibrary = function(scope,fCallback){
 	var fStandardLibrary = require("./fStandardLibrary");
 	fStandardLibrary(scope);
 
-	// TODO: we should compile stdlib.silk into a big comment at the end of this
+	// TODO: we should compile stdlib.vjs into a big comment at the end of this
 	// file so that we don't have to have an extra network lookup in a real
 	// deployemnt
-	GlobalSilk.fGet('standardlibrary.silk', function(err,sData){
-		nsSilk.compile(scope,GlobalSilk.parseHTML(sData))();
+	GlobalVivid.fGet('standardlibrary.vjs', function(err,sData){
+		nsVivid.compile(scope,GlobalVivid.parseHTML(sData))();
 		fCallback(null);
 	});
 };
 
 
 // --------------------------------------------------------------------
-GlobalSilk.init = function(fRender, bSkipStdLib){
+GlobalVivid.init = function(fRender, bSkipStdLib){
 	var jq=$('body').contents();
 
 	this.scope.defvar('_inner',undefined,ffOnDirty(fRender));
@@ -58,18 +58,18 @@ GlobalSilk.init = function(fRender, bSkipStdLib){
 	this.scope.getvar('_inner');
 
 	if (bSkipStdLib){
-		GlobalSilk.scope.setvar('_inner', nsSilk.compile(GlobalSilk.scope, jq));
+		GlobalVivid.scope.setvar('_inner', nsVivid.compile(GlobalVivid.scope, jq));
 	}
 	else{
 		this.fLoadStandardLibrary(this.scope, function(err){
-			GlobalSilk.scope.setvar('_inner', nsSilk.compile(GlobalSilk.scope, jq));
+			GlobalVivid.scope.setvar('_inner', nsVivid.compile(GlobalVivid.scope, jq));
 			// no need to callback. _inner will take care of it.
 		});
 	}
 };
 
 // --------------------------------------------------------------------
-GlobalSilk.fGet = (
+GlobalVivid.fGet = (
 	typeof window !== 'undefined' 
 		?  function(sUrl, fCallback){
 			$.ajax({
@@ -93,19 +93,19 @@ GlobalSilk.fGet = (
 
 
 // --------------------------------------------------------------------
-GlobalSilk.affjqModules = {};
-GlobalSilk.fDefineModule = function(s,ffjq){
-	GlobalSilk.affjqModules[s] = ffjq;
+GlobalVivid.affjqModules = {};
+GlobalVivid.fDefineModule = function(s,ffjq){
+	GlobalVivid.affjqModules[s] = ffjq;
 };
 
-GlobalSilk.ffjqModule = function(s){
-	return GlobalSilk.affjqModules[s];
+GlobalVivid.ffjqModule = function(s){
+	return GlobalVivid.affjqModules[s];
 };
 
 
 
 // --------------------------------------------------------------------
-GlobalSilk.cleanHTML = function(shtml){
+GlobalVivid.cleanHTML = function(shtml){
 	shtml = shtml.replace(/<defelt/g,"<script type='defelt'");
   shtml = shtml.replace(/<\/defelt>/g,"</script>");
 	
@@ -119,16 +119,16 @@ GlobalSilk.cleanHTML = function(shtml){
 };
 
 // --------------------------------------------------------------------
-GlobalSilk.parseHTML = function(shtml){
+GlobalVivid.parseHTML = function(shtml){
 	return $($.parseHTML(this.cleanHTML(shtml)));
 };
 
 // --------------------------------------------------------------------
-GlobalSilk.setContents = nsSilk.fSafeSwapContents;
-GlobalSilk.compile = nsSilk.compile;
-GlobalSilk.expression = nsSilk.ffxLiveExpression;
-GlobalSilk.Scope = Scope;
+GlobalVivid.setContents = nsVivid.fSafeSwapContents;
+GlobalVivid.compile = nsVivid.compile;
+GlobalVivid.expression = nsVivid.ffxLiveExpression;
+GlobalVivid.Scope = Scope;
 
 
-module.exports = GlobalSilk;
+module.exports = GlobalVivid;
 

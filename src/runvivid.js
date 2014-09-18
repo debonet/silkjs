@@ -1,14 +1,14 @@
 var fCreateDom = require("jsdom").env;
 var nsFs = require('fs');
 var nsProcess = process;
-var GlobalSilk = require("./GlobalSilk");
+var GlobalVivid = require("./GlobalVivid");
 var Yargs = require("yargs");
 
-// make the Silk object global
-global.Silk = GlobalSilk;
+// make the Vivid object global
+global.Vivid = GlobalVivid;
 
 var aArg = Yargs
-	.usage('[-nostdlib] <silk-file>')
+	.usage('[-nostdlib] <vivid-js-file>')
 	.demand(1)
 
 	.boolean('n')
@@ -36,7 +36,7 @@ fCreateDom(
 		global.window = window;
 		global.document = window.document;
 
-		$('body').append(Silk.parseHTML(shtml));
+		$('body').append(Vivid.parseHTML(shtml));
 		
 		var nIteration = 0;
 		var timeout;
@@ -48,11 +48,11 @@ fCreateDom(
 			timeout=setTimeout(function(){
 				console.log('---------------------------------------------------- Iteration ' + nIteration );
 				console.log($("<div></div>").append(jq).html());
-			}, 100);
+			}, 0);
 
 		};
 
-		Silk.init(fPrintBody, aArg['nostdlib']);
+		Vivid.init(fPrintBody, aArg['nostdlib']);
 	}
 );
 

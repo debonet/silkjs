@@ -7,8 +7,11 @@ var ffBind = require("./ffBind");
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+var nLiveObject = 0;
 var LiveObject = function(s, bArray, loParent){
-	this.sName = s;
+	this.sName = s + '(lo'+nLiveObject + ")";
+	nLiveObject++;
+
 	this.loParent = loParent;
 	this.vloChildren = [];
 	this.vlvListeners = [];
@@ -48,9 +51,12 @@ var LiveObject = function(s, bArray, loParent){
 
 
 LiveObject.prototype.push = function(x){
+//		D("TRACKUSAGE");LiveValue.fTrackUsage(this);
 	this.fDirty();
-	this.xlv.push(new LiveValue(this.sName+"[]",x));
-	this.fAddAccess(this.xlv.length-1);
+	var c=this.xlv.length;
+	this.xlv.push(new LiveValue(this.sName+":" + c,x));
+	this.xlv[c].fAddListener(this);
+	this.fAddAccess(c);
 };
 
 LiveObject.prototype.pop = function(){
@@ -61,7 +67,7 @@ LiveObject.prototype.pop = function(){
 
 LiveObject.prototype.shift = function(x){
 	this.fDirty();
-	this.xlv.shift(new LiveValue(this.sName+"[]",x));
+	this.xlv.shift(new LiveValue(this.sName+"[shift]",x));
 	this.fAddAccess(this.xlv.length-1);
 };
 
@@ -99,7 +105,7 @@ LiveObject.prototype.splice = function(){
 
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fDirty = function(){   
-//	D("DIRTYOBJ",this.sName);
+//	D("DIRTYOBJ",this.sName, this.vlvListeners.length);
   this.vlvListeners.forEach(function(lvListener){
     lvListener.fDirty();
   });
@@ -248,6 +254,7 @@ LiveObject.prototype.fDelete = function(s){
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fxGet = function(s){
 	if (s in this.xlv){
+//		D("TRACKUSAGE");LiveValue.fTrackUsage(this);
 		return this.xlv[s].fxGet();
 	}
 	if (this.loParent){
@@ -258,8 +265,10 @@ LiveObject.prototype.fxGet = function(s){
 // ---------------------------------------------------------------------------
 LiveObject.prototype.fSet = function(s,x){
 	if (s in this.xlv){
+//		D("TRACKUSAGE");LiveValue.fTrackUsage(this);
 		this.xlv[s].fSet(x);
 //		this.xlv[s].fAddListener(this);
+//		D("NOADDLISTENER",this.sName);
 		return;
 	}
 	if (this.loParent){

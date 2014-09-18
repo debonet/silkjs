@@ -5,8 +5,11 @@ var ffBind = require("./ffBind");
 var LiveObject = require("./LiveObject");
 var D = require('./fDebugOutput');
 
+var nScope=0;
 var Scope = function(s, scopeParent, bVarOnly){
-	this.sName=s;
+	this.sName=s + nScope;
+	nScope ++;
+
 	this.scopeParent = scopeParent;
 	this.vlvListeners = [];
 
