@@ -604,7 +604,8 @@ index.html
 		</div>
 	</body>
 </html>
-	
+~~~
+
 Note however, that the `<include>` directive is fully scoped, and so
 the definition of `<footer>` only exists within the `<div>`
 element. Alternative definitions of footer could be created outside
