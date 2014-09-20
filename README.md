@@ -210,7 +210,7 @@ They are constructs that can easily and trivially be written within Vivid itself
 
 
 
-~~~js
+~~~html
 
 <!-- foreach element -->
 <defelt name="foreach" items="{{[]}}" as="item" indexby="_index">
@@ -259,7 +259,7 @@ How about attributes modifier?
 
 Oh yeah we do! And it's super easy too. Here's an example
 
-~~~js
+~~~html
 <defattr name="stylize">
 	return function(jqInstance){
 	  jqInstance.find("*").andSelf().css(_.stylize);
@@ -270,7 +270,7 @@ Oh yeah we do! And it's super easy too. Here's an example
 
 will recursively apply a style to the element and it's contents. Just take a look:
 
-~~~js
+~~~html
 
 <defmacro name="foo">
 	<let x="{{_._inner}}">
@@ -319,7 +319,7 @@ What about realtime DOM manipulation?
 
 You bet! Take a look at this:
 
-~~~js
+~~~html
 
 <defattr name="watch">
 	var sVar = _.watch;
@@ -364,7 +364,7 @@ How about tabs? Wouldn't it be nice to write:
 
 And have it do the obvious thing. You can. Tabs can be defined programatically with `<defelt>`:
 
-~~~js
+~~~html
 <defelt name="tabs" chosen="tab">
 
 	return function(){
