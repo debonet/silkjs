@@ -51,6 +51,23 @@
 	</defun>
 
 	<!-- -------------------------------------- -->
+	<defun name="fsForTm">
+		return function(tm){
+			var date = new Date(tm);
+			return (date.getMonth()+1) + "/" + date.getDate() + "/" + date.getFullYear()
+			+ " " + _.fsTimeForTm(tm);
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
+	<defun name="ftmForTmAndHourMin">
+		return function(tm,nHour,nMin){
+			var date = new Date(tm);
+			return new Date(date.getFullYear(), date.getMonth(), date.getDate(), nHour, nMin).getTime();
+		}
+	</defun>
+
+	<!-- -------------------------------------- -->
 	<defun name="faFilterByDate">
 		// TODO: put real iCal interpreter here, recurrence rules, etc.
 	return function(vaEvents, tmStart, tmEnd){
@@ -76,7 +93,7 @@
 
 
 	<!-- -------------------------------------- -->
-	<defelt name="monthlyview2" tm="" events="{{ [] }}" onclick="{{_.__identity__}}">
+	<defelt name="monthlyview" tm="" events="{{ [] }}" onclick="{{_.__identity__}}">
 		return function(){
 			var startdow=_.fcFirstDOWOfMonth(_.tm);
 			var days=_.fcDaysInMonth(_.tm);
@@ -131,7 +148,6 @@
 		<if test="{{_[_.model]}}" myinner="{{_._inner}}">
 			<click-blocker></click-blocker>
 				<div class="dialog-body">
-					{{scope.sName}}
 					<div class="dialog-close" click="_[_.model]=false">X</div>
 					{{_.myinner}}
 				</div>
@@ -141,13 +157,19 @@
 
 	
 	<!-- -------------------------------------- -->
-	<defmacro name="question" label="" element="input">
+	<defmacro name="question" label="" element="input" inputtype="text">
 		<div passattr="class, style">
 			<div>
 				{{_.label}}
 			</div>
 			<div>
-				<dynamic element="{{_.element}}" model="{{_.model}}">{{_._inner}}</dynamic>
+				<dynamic 
+					element="{{_.element}}" 
+					type="{{_.inputtype}}"
+					min="{{_.min}}"
+					max="{{_.max}}"
+					model="{{_.model}}"
+				>{{_._inner}}</dynamic>
 			</div>
 		</div>
 	</defmacro>
@@ -221,6 +243,7 @@
 			]
 			}}'
 
+			tm="{{_.ftmFromS('8/20/2014')}}" 
 			date="date"
 			summary="summary"
 		>
@@ -228,34 +251,33 @@
 		<defun name="neweventclick">
 			return function(tm){
 				_.adddialog = true; 
-				_.date=new Date(tm).toString();
+				scope.defvar('tm',tm);
 				_.summary='';
 			}
 		</defun>
 
-		<monthlyview2 
-				tm="{{_.ftmFromS('8/20/2014')}}" 
-				events="{{_.events}}"
-				onclick="{{_.neweventclick}}"
-			>
-		</monthlyview2>
+		<monthlyview 
+			tm="{{_.tm}}"
+			events="{{_.events}}"
+			onclick="{{_.neweventclick}}"
+		>
+		</monthlyview>
 
 		<!-- -------------------------------------- -->
 		<dialog model="adddialog">
-			Add New Event {{scope.sName}}
-			<question label="Date" model="date"></question>
-			<question label="Description" model="summary"></question>
-			<button click="_.events.push({stm:_.date,summary:_.summary});">
-				OK
-			</button>
+			<let hour="{{10}}" minutes="{{0}}">
+				<let tmnew="{{_.ftmForTmAndHourMin(_.tm,_.hour,_.minutes)}}">
+					Add New Event On {{_.fsForTm(_.tmnew)}}
+					<question label="Hour" inputtype="range" min="0" max="24" model="hour"></question>
+					<question label="Minute" inputtype="range" min="0" max="60" model="minutes"></question>
+					<question label="Description" element="textarea" model="summary"></question>
+					<button click="_.events.push({tm:_.tmnew,summary:_.summary}); _.adddialog = false;">
+						OK
+					</button>
+				</let>
+			</let>
 		</dialog>
 	
-
-
-		{{JSON.stringify(_.events)}}
-
-		{{_.adddialog}}
-
 	</let>
 	
 </let>

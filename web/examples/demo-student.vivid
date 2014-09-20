@@ -1,0 +1,40 @@
+
+<defmacro name="studentrow" student="some body" grade="n/a">
+	<div style='display:table-row'>
+		<div style='display:table-cell'>
+			{{_.student}}
+		</div>
+		<div style='display:table-cell'>
+			{{_.grade}}
+		</div>
+	</div>
+</defmacro>
+
+<div style='display:table'>
+	<studentrow student="Bob Smith" grade="A+"></studentrow>
+	<studentrow student="John Doe" grade="B-"></studentrow>
+</div>
+
+
+
+Should yield:
+
+<div style='display:table'>
+	<div style='display:table-row'>
+		<div style='display:table-cell'>
+			Bob Smith
+		</div>
+		<div style='display:table-cell'>
+			A+
+		</div>
+	</div>
+	<div style='display:table-row'>
+		<div style='display:table-cell'>
+			John Doe
+		</div>
+		<div style='display:table-cell'>
+			B-
+		</div>
+	</div>
+</div>
+

@@ -165,11 +165,18 @@
 		// only work on input elements, as defined by jQuery's :input selector
 		if ((jq.filter(":input")).length){
 			var e=jq.get(0);
-			var nStart = e.selectionStart;
-			var nEnd = e.selectionEnd;
-			var sDir = e.selectionDirection;
-			jq.val(_.format(scope._[_.model]));
-			e.setSelectionRange(nStart,nEnd,sDir);
+
+			try{
+				var nStart = e.selectionStart;
+				var nEnd = e.selectionEnd;
+				var sDir = e.selectionDirection;
+				jq.val(_.format(scope._[_.model]));
+				e.setSelectionRange(nStart,nEnd,sDir);
+			}
+			catch (e){
+				jq.val(_.format(scope._[_.model]));
+			}
+
 			if (!jqInstance.data("sk-model")){
 				jqInstance.on("input", function(){
 					scope.setvar(_.model, _.parse($(this).val()));

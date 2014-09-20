@@ -39,10 +39,10 @@ GlobalVivid.fLoadStandardLibrary = function(scope,fCallback){
 	var fStandardLibrary = require("./fStandardLibrary");
 	fStandardLibrary(scope);
 
-	// TODO: we should compile stdlib.vjs into a big comment at the end of this
+	// TODO: we should compile stdlib.vivid into a big comment at the end of this
 	// file so that we don't have to have an extra network lookup in a real
 	// deployemnt
-	GlobalVivid.fGet('standardlibrary.vjs', function(err,sData){
+	GlobalVivid.fGet('standardlibrary.vivid', function(err,sData){
 		nsVivid.compile(scope,GlobalVivid.parseHTML(sData))();
 		fCallback(null);
 	});

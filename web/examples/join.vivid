@@ -1,0 +1,11 @@
+
+<defmacro name="join" by=", ">
+\	<let all="{{_._inner}}" len="{{_._inner.length}}">\
+\		<foreach items="{{_.all}}" as="e" indexby="n">\
+\			{{$(_.e)}}<if test="{{_.n !== _.len - 1}}">{{_.by}}</if>\
+\		</foreach>\
+\	</let>\
+</defmacro>
+
+<join by=", "><repeat times='4' indexby='a'>{{_.a}}</repeat></join>
+

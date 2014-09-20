@@ -1,6 +1,6 @@
 
-index.js: $(filter-out index.js, $(wildcard *.js))
-	../node_modules/browserify/bin/cmd.js vivid.js > index.js
+vivid.js: $(wildcard src/*.js)
+	node_modules/browserify/bin/cmd.js src/browservivid.js > web/vivid.js
 
 
 TEST=.*
