@@ -33,19 +33,19 @@ Object.defineProperty(
 
 
 // ---------------------------------------------------------------------------
-Scope.prototype.fDirty = function(){   
-  this.vlvListeners.forEach(function(lvListener){
-    lvListener.fDirty();
+Scope.prototype.__fDirty = function(){   
+  this.vlvListeners.__forEach(function(lvListener){
+    lvListener.__fDirty();
   });
 };
  
 // ---------------------------------------------------------------------------
-Scope.prototype.fRemoveListener = function(lv){
+Scope.prototype.__fRemoveListener = function(lv){
     this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
 };
  
 // ---------------------------------------------------------------------------
-Scope.prototype.fAddListener = function(lv){
+Scope.prototype.__fAddListener = function(lv){
     this.vlvListeners.push(lv);
 };
  
@@ -53,105 +53,105 @@ Scope.prototype.fAddListener = function(lv){
 
 // variable methods
 Scope.prototype.recompilevar = function(s){
-	this.loVariables.fRecompile(s);
+	this.loVariables.__fRecompile(s);
 };
 
 
 // variable methods
 Scope.prototype.defvar = function(s,x,f){
-	return this.loVariables.fDefine(s,x,f);
+	return this.loVariables.__fDefine(s,x,f);
 };
 
 Scope.prototype.defun = function(s,x){
-	return this.loVariables.fDefine(s,function(){return x;});
+	return this.loVariables.__fDefine(s,function(){return x;});
 };
 
 Scope.prototype.defmutable = function(s,x){
-	return this.loVariables.fDefineMutable(s,x);
+	return this.loVariables.__fDefineMutable(s,x);
 };
 
 Scope.prototype.checkvar = function(s){
-	return this.loVariables.fbExists(s);
+	return this.loVariables.__fbExists(s);
 };
 
 Scope.prototype.localvar = function(s){
-	return this.loVariables.fbExistsLocally(s);
+	return this.loVariables.__fbExistsLocally(s);
 };
 
 Scope.prototype.delvar = function(s){
-	return this.loVariables.fDelete(s);
+	return this.loVariables.__fDelete(s);
 };
 
 Scope.prototype.dirtyvar = function(s){
 	D("DIRTYVAR",s);
-	return this.loVariables.fDirtyVar(s);
+	return this.loVariables.__fDirtyVar(s);
 };
 
 Scope.prototype.getvar = function(s){
-	return this.loVariables.fxGet(s);
+	return this.loVariables.__fxGet(s);
 };
 
 Scope.prototype.setvar = function(s,x){
-	return this.loVariables.fSet(s,x);
+	return this.loVariables.__fSet(s,x);
 };
 
 
 // element methods
 Scope.prototype.defelt = function(s,x){
-	return this.loElements.fDefine(s,function(){return x;});
+	return this.loElements.__fDefine(s,function(){return x;});
 };
 
 Scope.prototype.checkelt = function(s){
-	return this.loElements.fbExists(s);
+	return this.loElements.__fbExists(s);
 };
 
 Scope.prototype.localelt = function(s){
-	return this.loElements.fbExistsLocally(s);
+	return this.loElements.__fbExistsLocally(s);
 };
 
 Scope.prototype.delelt = function(s){
-	return this.loElements.fDelete(s);
+	return this.loElements.__fDelete(s);
 };
 
 Scope.prototype.dirtyelt = function(s){
-	return this.loElements.fDirtyVar(s);
+	return this.loElements.__fDirtyVar(s);
 };
 
 Scope.prototype.getelt = function(s){
-	return this.loElements.fxGet(s);
+	return this.loElements.__fxGet(s);
 };
 
 Scope.prototype.setelt = function(s,x){
-	return this.loElements.fSet(s,x);
+	return this.loElements.__fSet(s,x);
 };
 
 // attribute methods
 Scope.prototype.defattr = function(s,x){
-	return this.loAttributes.fDefine(s,function(){return x;});
+	return this.loAttributes.__fDefine(s,function(){return x;});
 };
 
 Scope.prototype.checkattr = function(s){
-	return this.loAttributes.fbExists(s);
+	return this.loAttributes.__fbExists(s);
 };
 
 Scope.prototype.localattr = function(s){
-	return this.loAttributes.fbExistsLocally(s);
+	return this.loAttributes.__fbExistsLocally(s);
 };
 
 Scope.prototype.delattr = function(s){
-	return this.loAttributes.fDelete(s);
+	return this.loAttributes.__fDelete(s);
 };
 
 Scope.prototype.dirtyattr = function(s){
-	return this.loAttributes.fDirtyVar(s);
+	return this.loAttributes.__fDirtyVar(s);
 };
 
 Scope.prototype.getattr = function(s){
-	return this.loAttributes.fxGet(s);
+	return this.loAttributes.__fxGet(s);
 };
 
 Scope.prototype.setattr = function(s,x){
-	return this.loAttributes.fSet(s,x);
+	return this.loAttributes.__fSet(s,x);
 };
 
 

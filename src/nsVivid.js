@@ -113,10 +113,12 @@ var fsUnescape = function(s){
 //
 var sVarClosureForEval = (
 	""
+/*
 		+ "var defvar     = ffBind(scope, 'defvar');\n"
 		+ "var defmutable = ffBind(scope, 'defmutable');\n"
 		+ "var delvar     = ffBind(scope, 'delvar');\n"
 		+ "var checkvar   = ffBind(scope, 'checkvar');\n"
+*/
 		+ "var _          = scope._;\n"
 );
 

@@ -20,11 +20,11 @@ var ffOnDirty = function(fCallback){
 			timeoutDraw = setTimeout(function(){
 				timeoutDraw = undefined;
 				var jq = Vivid.scope._._inner;
-				if (Vivid.scope.loVariables.fbIsDirty("_inner")){
+				if (Vivid.scope.loVariables.__fbIsDirty("_inner")){
 					return;
 				}
 
-				Vivid.scope.loVariables.fCheckHonesty();
+				Vivid.scope.loVariables.__fCheckHonesty();
 
 				cIteration = 0;
 				fCallback(null, jq);

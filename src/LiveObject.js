@@ -8,30 +8,16 @@ var ffBind = require("./ffBind");
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 var nLiveObject = 0;
-var LiveObject = function(s, bArray, loParent){
-	this.sName = s + '(lo'+nLiveObject + ")";
+var LiveObject = function LiveObject(s, bArray, __loParent){
+	this.__sName = s + '(lo'+nLiveObject + ")";
 	nLiveObject++;
 
-	this.loParent = loParent;
-	this.vloChildren = [];
-	this.vlvListeners = [];
+	this.__loParent = __loParent;
+	this.__vloChildren = [];
 
-	this.xlv = bArray ? [] : {};
+	this.__xlv = bArray ? [] : {};
 
 	var lo = this;
-
-	// add length pseudo-member if array
-	if (bArray){
-		var lo=this;
-		Object.defineProperty(
-			lo,	"length", {
-				get : function(){return lo.xlv.length},
-				configurable: false,
-				enumerable: false,
-				writeable : false
-			}
-		);
-	}
 
 	// freeze members
 	each(this, function(f,s){
@@ -42,264 +28,262 @@ var LiveObject = function(s, bArray, loParent){
 		});
 	});
 
+
+	// add length pseudo-member if array
+	if (bArray){
+		this.__xlv['__reallength'] = new LiveValue(this.__sName + ":__reallength", function(){
+			return lo.__xlv.length;
+		});
+		this.__fAddAccess('__reallength',true);
+
+		Object.defineProperty(
+			lo,	"length", {
+				get : function(){
+					return lo.__reallength;
+					return lo.__xlv['__reallength'].fxGet();
+				},
+				configurable: false,
+				enumerable: false,
+				writeable : false
+			}
+		);
+	}
+
+
 	// set up scoping hierarchy 
-	if(loParent){
-		loParent.vloChildren.push(this);
-		this.__proto__ = loParent;
+	if(__loParent){
+		__loParent.__vloChildren.push(this);
+		this.__proto__ = __loParent;
 	}
 };
 
 
 LiveObject.prototype.push = function(x){
 //		D("TRACKUSAGE");LiveValue.fTrackUsage(this);
-	this.fDirty();
-	var c=this.xlv.length;
-	this.xlv.push(new LiveValue(this.sName+":" + c,x));
-	this.xlv[c].fAddListener(this);
-	this.fAddAccess(c);
+	var c=this.__xlv.length;
+	this.__xlv.push(new LiveValue(this.__sName+":" + c,x));
+	this.__fAddAccess(c);
+	this.__fDirty();
 };
 
 LiveObject.prototype.pop = function(){
-	this.fDirty();
-	delete this[this.xlv.length-1];
-	return this.xlv.pop().fxGet();
+	this.__fDirty();
+	delete this[this.__xlv.length-1];
+	return this.__xlv.pop().fxGet();
 };
 
 LiveObject.prototype.shift = function(x){
-	this.fDirty();
-	this.xlv.shift(new LiveValue(this.sName+"[shift]",x));
-	this.fAddAccess(this.xlv.length-1);
+	this.__fDirty();
+	this.__xlv.shift(new LiveValue(this.__sName+"[shift]",x));
+	this.__fAddAccess(this.__xlv.length-1);
 };
 
 LiveObject.prototype.unshift = function(){
-	this.fDirty();
-	delete this[this.xlv.length-1];
-	return this.xlv.unshift().fxGet();
+	this.__fDirty();
+	delete this[this.__xlv.length-1];
+	return this.__xlv.unshift().fxGet();
 };
 
 LiveObject.prototype.sort = function(f){
-	this.fDirty();
-	this.xlv.sort(f);
+	this.__fDirty();
+	this.__xlv.sort(f);
 };
 
 LiveObject.prototype.reverse = function(){
-	this.fDirty();
-	this.xlv.reverse();
+	this.__fDirty();
+	this.__xlv.reverse();
 };
 
 LiveObject.prototype.splice = function(){
-	this.fDirty();
-	var cOrig = this.xlv.length;
-	Array.prototype.splice(this.xlv,arguments);
-	var cNew = this.xlv.length;
+	this.__fDirty();
+	var cOrig = this.__xlv.length;
+	Array.prototype.splice(this.__xlv,arguments);
+	var cNew = this.__xlv.length;
 
 	var n;
 	for (n=cNew; n<cOrig; n++){
 		delete this[n];
 	}
 	for (var n=cOrig; n<cNew; n++){
-		this.fAddAccess(n);
+		this.__fAddAccess(n);
 	}
 };
 
 
-// ---------------------------------------------------------------------------
-LiveObject.prototype.fDirty = function(){   
-//	D("DIRTYOBJ",this.sName, this.vlvListeners.length);
-  this.vlvListeners.forEach(function(lvListener){
-    lvListener.fDirty();
-  });
-};
- 
-// ---------------------------------------------------------------------------
-LiveObject.prototype.fRemoveListener = function(lv){
-    this.vlvListeners.splice(this.vlvListeners.indexOf(lv),1);
-};
- 
-// ---------------------------------------------------------------------------
-LiveObject.prototype.fAddListener = function(lv){
-    this.vlvListeners.push(lv);
-};
- 
 // ---------------------------------------------------------------------------
 Object.defineProperty(
 	LiveObject.prototype,"parent", {
-		get: function(){return this.loParent;}
+		get: function(){return this.__loParent;}
 	}
 );
 
+
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fCheckHonesty = function(){
+LiveObject.prototype.__fDirty = function(){   
+	if (this.__xlv.constructor === Array){
+		this.__xlv['__reallength'].fDirty();
+	}
+};
+ 
+// ---------------------------------------------------------------------------
+LiveObject.prototype.__fCheckHonesty = function(){
 	var lo=this;
 	each(Object.keys(this), function(s){
-		if (!(s in lo.xlv)){
-			throw("ILLEGAL VARIABLE ASSIGNMENT WITHOUT DEFINE " + lo.sName + "." + s);
+		if (!(s in lo.__xlv)){
+			throw("ILLEGAL VARIABLE ASSIGNMENT WITHOUT DEFINE " + lo.__sName + "." + s);
 		}
-		if (lo.xlv[s]._x instanceof LiveObject){
-			lo.xlv[s]._x.fCheckHonesty();
+		if (lo.__xlv[s]._x instanceof LiveObject){
+			lo.__xlv[s]._x.__fCheckHonesty();
 		}
 	});
 
-	each(this.vloChildren, function(lo){
-		lo.fCheckHonesty();
+	each(this.__vloChildren, function(lo){
+		lo.__fCheckHonesty();
 	});
 };
 
-// ---------------------------------------------------------------------------
-LiveObject.prototype.fvslv = function(){
-	var setVar = {};
 
-	var lo = this;
-	do{
-		each(lo.xlv, function(x,s){
-			setVar[s]=true;
-		});
-		lo = lo.loParent;
-	} while(lo);
-
-	var vs=[];
-	each(setVar, function(x,s){
-		vs.push(s);
-	});
-
-	return vs;
-}
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.faSimple = function(){
-	var vslv = this.fvslv();
-	var a={};
-	var lo = this;
-	vslv.forEach(function(slv){
-		a[slv] = lo.fxGet(slv);
-	});
-	return a;
-};
-
-LiveObject.prototype.fAddAccess = function(s){
-	if (this.vlvListeners.length){
-		this.fDirty();
-		this.xlv[s].fAddListener(this);
-	}
+LiveObject.prototype.__fAddAccess = function(s,bHide){
 	var lo=this;
 	Object.defineProperty(
 		lo,	s, {
-			get : function(){return lo.xlv[s].fxGet();},
-			set : function(x){return lo.xlv[s].fSet(x);},
+			get : function(){return lo.__xlv[s].fxGet();},
+			set : function(x){return lo.__xlv[s].fSet(x);},
 			configurable: true,
-			enumerable: true,
+			enumerable: !bHide,
 			writeable : false
 		}
 	);
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fDefine = function(s,x,f,bMutable){
+LiveObject.prototype.__fDefine = function(s,x,f,bMutable){
 
-	var bExistsLocal = this.fbExistsLocally(s);
+	var bExistsLocal = this.__fbExistsLocally(s);
 
 	if (!bExistsLocal){
-		this.xlv[s] = new LiveValue(this.sName + ":" + s, x, bMutable, f);
-		this.fAddAccess(s);
+		this.__xlv[s] = new LiveValue(this.__sName + ":" + s, x, bMutable, f);
+		this.__fAddAccess(s);
+		this.__fDirty();
 	}
 	else{
-		this.xlv[s].bMutable = bMutable;
+		this.__xlv[s].bMutable = bMutable;
 		if (f){
-			this.xlv[s].fCallbackDirty = f;
+			this.__xlv[s].fCallbackDirty = f;
 		}
-		this.xlv[s].fSet(x);
+		this.__xlv[s].fSet(x);
 	}
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fDefineMutable = function(s,x,f){
-	this.fDefine(s,x,f,true);
+LiveObject.prototype.__fDefineMutable = function(s,x,f){
+	this.__fDefine(s,x,f,true);
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fRecompile = function(s){
-	if (s in this.xlv){
-		this.xlv[s].fRecompile();
+LiveObject.prototype.__fRecompile = function(s){
+	if (s in this.__xlv){
+		this.__xlv[s].fRecompile();
 		return;
 	}
-	if (this.loParent){
-		return this.loParent.fRecompile(s);
+	if (this.__loParent){
+		return this.__loParent.__fRecompile(s);
 	}
-	D("RECOMPILE UNKNOWN VARIABLE ",this.sName,s);
+	D("RECOMPILE UNKNOWN VARIABLE ",this.__sName,s);
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fDirtyVar = function(s){
-	if (s in this.xlv){
-		this.xlv[s].fDirty(s);
+LiveObject.prototype.__fDirtyVar = function(s){
+	if (s in this.__xlv){
+		this.__xlv[s].fDirty(s);
 		return;
 	}
-	if (this.loParent){
-		return this.loParent.fDirtyVar(s);
+	if (this.__loParent){
+		return this.__loParent.__fDirtyVar(s);
 	}
-	D("UNKNOWN VARIABLE ",this.sName,s);
+	D("UNKNOWN VARIABLE ",this.__sName,s);
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fDelete = function(s){
-	if (s in this.xlv){
+LiveObject.prototype.__fDelete = function(s){
+	if (s in this.__xlv){
 		delete this[s];
-		delete this.xlv[s];
-		this.fDirty();
+		delete this.__xlv[s];
+		this.__fDirty();
 		return;
 	}
-	D("UNKNOWN VARIABLE ",this.sName,s);
+	D("UNKNOWN VARIABLE ",this.__sName,s);
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fxGet = function(s){
-	if (s in this.xlv){
-//		D("TRACKUSAGE");LiveValue.fTrackUsage(this);
-		return this.xlv[s].fxGet();
+LiveObject.prototype.__fxGet = function(s){
+	if (s in this.__xlv){
+//		D("TRACKUSAGE");LiveValue.__fTrackUsage(this);
+		return this.__xlv[s].fxGet();
 	}
-	if (this.loParent){
-		return this.loParent.fxGet(s);
+	if (this.__loParent){
+		return this.__loParent.__fxGet(s);
 	}
-	D("GET UNKNOWN VARIABLE ",this.sName,s);
+	D("GET UNKNOWN VARIABLE ",this.__sName,s);
 };
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fSet = function(s,x){
-	if (s in this.xlv){
-//		D("TRACKUSAGE");LiveValue.fTrackUsage(this);
-		this.xlv[s].fSet(x);
-//		this.xlv[s].fAddListener(this);
-//		D("NOADDLISTENER",this.sName);
+LiveObject.prototype.__fSet = function(s,x){
+	if (s in this.__xlv){
+//		D("TRACKUSAGE");LiveValue.__fTrackUsage(this);
+		this.__xlv[s].fSet(x);
+//		this.__xlv[s].fAddListener(this);
+//		D("NOADDLISTENER",this.__sName);
 		return;
 	}
-	if (this.loParent){
-		return this.loParent.fSet(s,x);
+	if (this.__loParent){
+		return this.__loParent.__fSet(s,x);
 	}
-	D("SET UNKNOWN VARIABLE ",this.sName,s);
+	D("SET UNKNOWN VARIABLE ",this.__sName,s);
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fbExists = function(s){
-	if (s in this.xlv){
+LiveObject.prototype.__fbExists = function(s){
+	if (s in this.__xlv){
 		return true;
 	}
-	if (this.loParent){
-		return this.loParent.fbExists(s);
+	if (this.__loParent){
+		return this.__loParent.__fbExists(s);
 	}
 	return false;
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fbExistsLocally = function(s){
-	return s in this.xlv;
+LiveObject.prototype.__fbExistsLocally = function(s){
+	return s in this.__xlv;
 };
 
 // ---------------------------------------------------------------------------
-LiveObject.prototype.fbIsDirty = function(s){
-	if (s in this.xlv){
-		return this.xlv[s].bDirty;
+LiveObject.prototype.__fbIsDirty = function(s){
+	if (s in this.__xlv){
+		return this.__xlv[s].bDirty;
 	}
-	D("UNKNOWN VARIABLE ",this.sName,s);
+	D("UNKNOWN VARIABLE ",this.__sName,s);
 };
+
+
+
+
+// add .*var variants so that _.defvar() will work
+LiveObject.prototype.defvar = LiveObject.prototype.__fDefine;
+LiveObject.prototype.recompilevar = LiveObject.prototype.__fRecompile;
+LiveObject.prototype.defun = function(s,x){
+	return this.__fDefine(s,function(){return x;});
+};
+
+LiveObject.prototype.defmutable = LiveObject.prototype.__fDefineMutable;
+LiveObject.prototype.checkvar = LiveObject.prototype.__fbExists;
+LiveObject.prototype.localvar = LiveObject.prototype.__fbExistsLocally;
+LiveObject.prototype.delvar = LiveObject.prototype.__fDelete;
+LiveObject.prototype.dirtyvar = LiveObject.prototype.__fDirtyVar;
+LiveObject.prototype.getvar = LiveObject.prototype.__fxGet;
+LiveObject.prototype.setvar = LiveObject.prototype.__fSet;
 
 
 // freeze class methods

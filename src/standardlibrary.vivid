@@ -107,7 +107,6 @@
 		var jqOut = $();
 
 		var a=_.items;
-
 		// delete exess, if changed 
 		each(ascope,function(scope,s){
 			if (!(s in a)){

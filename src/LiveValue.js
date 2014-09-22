@@ -9,15 +9,15 @@ var LiveValue = function(s,x,bMutable,fCallbackDirty){
 	this.sName          = s + "(lv" + nLiveValue + ")";
 	nLiveValue++;
 
-	this._x             = undefined;
+	this.xValue             = undefined;
 	this.vlvDependsOn   = [];
 	this.vlvListeners   = [];
-	this._xCached       = null;
+	this.xValueCached       = null;
 	this.bDirty         = false;
+
 	if (bMutable){
 		this.bMutable       = !!bMutable;
 	}
-	
 	if (fCallbackDirty){
 		this.fCallbackDirty = fCallbackDirty;
 	}
@@ -30,7 +30,7 @@ LiveValue.prototype.fSet = function(x){
 	// change function
 	//	D("SET",this.sName,x);
 
-	if(this._x !== x){
+	if(this.xValue !== x){
 		this.fDirty();
 
 		if (
@@ -41,15 +41,17 @@ LiveValue.prototype.fSet = function(x){
 			var LiveObject = require("./LiveObject");
 			
 			var lo = new LiveObject(this.sName + "[]", x instanceof Array);
-			lo.fAddListener(this);
 			each(x,function(xSub,n){
-				lo.fDefine(n,xSub);
-				lo.xlv[n].fAddListener(lo);
+				lo.__fDefine(n,xSub);
+				lo.__xlv[n].fAddListener(lv);
 			});
-			this._x = lo;
+			if (x instanceof Array){
+				lo.__xlv['__reallength'].fAddListener(lv);
+			}
+			this.xValue = lo;
 		}
 		else{
-			this._x = x;
+			this.xValue = x;
 		}
 		
 	}
@@ -96,11 +98,11 @@ LiveValue.prototype.fAddListener = function(lv){
 
 // ---------------------------------------------------------------------------
 LiveValue.prototype.fRecompile = function(){
-	if (!this._x.fRecompile){
+	if (!this.xValue.fRecompile){
 		D("NO RECOMPILE AVAILABLE");
 	}
 	else{
-		this._x = this._x.fRecompile(this._x);
+		this.xValue = this.xValue.fRecompile(this.xValue);
 		this.fDirty();
 	}
 };
@@ -126,11 +128,11 @@ LiveValue.prototype.fxGet = function(){
 	if (this.bDirty){
 		this.bDirty = false;
 
-		if (typeof(this._x) === "function"){
+		if (typeof(this.xValue) === "function"){
 			var vlvDependsNew = [];
 			kvlvDependsCache.push(vlvDependsNew);
 			klvListeners.push(this);
-			this._xCached = this._x();
+			this.xValueCached = this.xValue();
 			klvListeners.pop();
 			kvlvDependsCache.pop();
 
@@ -162,25 +164,10 @@ LiveValue.prototype.fxGet = function(){
 			this.vlvDependsOn = vlvDependsNew;
 		}
 		else{
-			this._xCached = this._x;
+			this.xValueCached = this.xValue;
 		}	
-
-/*
-		// asynchronously check arrays?
-		if (this._x instanceof Array){
-			var lv = this;
-			var c= this._x.length;
-			setTimeout(function(){
-				if (c !== lv._x.length && !lv.bDirty){
-					D("LENGTH CHANGE",c,lv._x);
-					lv.fDirty();
-				}
-			},0);
-		}
-*/
-
 	}
-	return this._xCached;
+	return this.xValueCached;
 };
 
 

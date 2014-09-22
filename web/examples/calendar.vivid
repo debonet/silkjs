@@ -76,7 +76,7 @@
 		each(vaEvents,function(aEvent){
 			if (!("tm" in aEvent)){
 			D(aEvent);
-				aEvent.fDefine('tm', _.ftmFromS(aEvent.stm));
+				aEvent.defvar('tm', _.ftmFromS(aEvent.stm));
 			}
 			if (aEvent.tm > tmStart && aEvent.tm < tmEnd){
 				vaOut.push(aEvent);
@@ -263,6 +263,7 @@
 		>
 		</monthlyview>
 
+		{{JSON.stringify(_.events)}}
 		<!-- -------------------------------------- -->
 		<dialog model="adddialog">
 			<let hour="{{10}}" minutes="{{0}}">
