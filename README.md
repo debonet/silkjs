@@ -573,10 +573,10 @@ Encapsulation
 -------------
 
 Bundles of functionaliy can be packaged up into separate VividJS
-files. By convention we use the extension '.vjs'.  Files can be included using 
+files. By convention we use the extension '.vivid'.  Files can be included using 
 the `<include>` element. Here's a simple example:
 
-Footer.vjs:
+Footer.vivid:
 ~~~html
 <defmacro name="footer" author="">
 	<hr/>
@@ -596,7 +596,7 @@ index.html
 	<body style='visibility:hidden'>
 	
 		<div>
-			<include url="Footer.vjs">Loading...</include>
+			<include url="Footer.vivid">Loading...</include>
 		
 			These are the page contents, blah blah blah.
 		
@@ -649,7 +649,7 @@ myController.js
 	}
 ~~~
 
-myApp.vjs
+myApp.vivid
 ~~~html
 	<usemodule module="myModel">
 		<h1> Hello {{_.username}}</h1>
@@ -684,7 +684,7 @@ There is also a command line tool called runvivid.js that can be
 invoked by:
 
 ~~~
-	node runvivid.js myVividFile.vjs
+	node runvivid.js myVividFile.vivid
 ~~~
 
 
@@ -698,6 +698,6 @@ Just drop us a line. There's tons to do. In particular things we're looking for:
 * documentation
 * unit test / testing
 * standard library developers
-* beta developers
-* complaints /suggestions
+* early application developers
+* complaints / suggestions
 
