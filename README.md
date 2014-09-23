@@ -569,6 +569,28 @@ Of course, the above example isn't really sensible. A more realistic example mig
 which would yield 1,2,1 before the button is clicked and 1,3,1 after.
 
 
+Practical Use of Live Values
+============================
+
+How about the typical "hello world!"
+
+~~~js
+
+<let person="world">
+	Hello {{_.person}}
+	<br>
+	Change Name: <input model="person">
+</let>
+~~~
+
+In this example, notice that `Hello {{_.person}}` changes dynamically as you type 
+in the input box.
+
+It does not matter how the variable `person` changes, either from user input, or
+an asyncronous network call, or some other event, the DOM is automatically updated
+to be consistent with the variable values.
+
+
 
 What's with the `_`'s?
 ======================
