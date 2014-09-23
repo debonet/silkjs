@@ -569,6 +569,52 @@ Of course, the above example isn't really sensible. A more realistic example mig
 which would yield 1,2,1 before the button is clicked and 1,3,1 after.
 
 
+
+What's with the `_`'s?
+======================
+
+Each element constructs a new Scope (see Scoping above). A scope is composed
+of 3 distinct namespaces, variables, elements, and attributes. 
+
+To decrease code clutter, we introduce some syntactic "sugar" around
+variable access, which make up the vast majority of scope-accessing
+code that will be written. The normal way to access a variable would
+be do do something like:
+
+~~~js
+	// increment myvar
+	scope.setvar('myvar',scope.getvar('myvar') + 1);
+~~~
+
+But this is quite clumsy, especially when real-word expressions make use of multiple
+variables. Instead we introduce a variable called `_` which provides common 
+javascript-style syntactic access to scope variable. E.g. the code above can become:
+
+~~~js
+	_.myvar ++;
+~~~
+
+Until Harmony Proxies are broadly deployed, VividJs will _require_
+variables be predefined prior to their use. This can be done with the
+`defvar()` method. The following are equivalent:
+
+~~~js
+scope.defvar("newvar",5);
+scope.setvar("newvar", scope.getvar("newvar") + 1);
+~~~
+
+and with sugar:
+
+~~~js
+_.defvar("newvar",5);
+_.newvar++;
+~~~
+
+
+Note: even with the `_` sugar syntax, `defvar` must still be used.
+
+
+
 Encapsulation
 -------------
 
